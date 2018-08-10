@@ -1,0 +1,43 @@
+@import model.DisplayDependency
+@(dependencies: Seq[DisplayDependency])
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>Dependency list</title>
+        <link rel="icon" href='@routes.Assets.at("images/favicon.png")' >
+        <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+    </head>
+    <body class="container">
+        <div class="col-md-12">
+            <div class="pull-right return-block">
+                <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
+            </div>
+            <div>
+                <form class="form-inline" autocomplete="off">
+                    <div class="form-group">
+                        <input id="search-input" class="form-control" type="search" placeholder="Search..." />
+                    </div>
+                </form>
+                <div id="search-list" class="versions list-group control-group accordion">
+                    @for(dependency <- dependencies) {
+                        <a href="@routes.DependencyController.dependency(dependency.name)" class="list-group-item repository dependency">
+                            <span class="name">
+                                @dependency.name
+                            </span>
+                            @defining(dependency.numberOfUses) { uses: Int =>
+                                <span class="pull-right label col-sm-3">
+                                    @uses @(if (uses > 1) "uses" else "use")
+                                </span>
+                            }
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+        <script src="@routes.Assets.at("javascripts/versions.js")"></script>
+    </body>
+</html>
+

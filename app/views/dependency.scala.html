@@ -1,0 +1,53 @@
+@import model.DisplayDependency
+@(dependency: DisplayDependency)
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>Dependency versions</title>
+        <link rel="icon" href='@routes.Assets.at("images/favicon.png")' >
+        <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+    </head>
+    <body class="container">
+        <div class="col-lg-12">
+            <h1>
+                @dependency.name
+                @defining(dependency.getCompletionPercentage) { completionPercentage =>
+                    <span data-color="@completionPercentage" class="pull-right label">@completionPercentage %</span>
+                }
+            </h1>
+            <h3>
+                <span>Latest Maven Release : </span> <span>@dependency.mvnVersion</span>
+            </h3>
+            <div class="pull-right return-block">
+                <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
+            </div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Version</th>
+                        <th>Repositories</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for(version <- dependency.versions.keys.toSeq.sortWith(dependency.sortByVersion)) {
+                    <tr>
+                        <td>@version</td>
+                        <td>
+                            <dl>
+                            @for(repository <- dependency.getRepositories(version)) {
+                                <dd><a href="@routes.RepositoryController.index(repository)" role="button">@repository</a></dd>
+                            }
+                            </dl>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <script src="@routes.Assets.at("javascripts/versions.js")"></script>
+    </body>
+</html>
+

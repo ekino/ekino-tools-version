@@ -1,0 +1,34 @@
+plugins {
+    id 'play'
+    id 'base'
+    id 'idea'
+}
+
+repositories {
+    jcenter()
+    maven {
+        name "typesafe-maven-release"
+        url "https://repo.typesafe.com/typesafe/maven-releases"
+    }
+    ivy {
+        name "typesafe-ivy-release"
+        url "https://repo.typesafe.com/typesafe/ivy-releases"
+        layout "ivy"
+    }
+}
+
+model {
+    components {
+        play {
+            platform play: property('play.version'), scala: property('scala.version')
+            injectedRoutesGenerator = true
+        }
+    }
+}
+
+dependencies {
+    play     group: 'org.slf4j',              name: 'slf4j-simple',            version: property('slf4j-simple.version')
+    play     group: 'org.eclipse.jgit',       name: 'org.eclipse.jgit',        version: property('org.eclipse.jgit.version')
+    play     group: 'com.typesafe.play',      name: 'play-guice_2.12',         version: property('play.version')
+    playTest group: 'org.scalatestplus.play', name: 'scalatestplus-play_2.12', version: property('scalatestplus-play_2.12.version')
+}

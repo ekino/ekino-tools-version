@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400');
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    background-color: #EEEEEE;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 300;
+}
+
+form {
+    margin-bottom: 2%;
+}
+
+tr {
+    background-color: #F4F4F4;
+}
+
+.return-block {
+    margin-bottom: 2%;
+}
+
+.container {
+    font-size: large;
+}
+
+.repository:before {
+    font-family: "Glyphicons Halflings", sans-serif;
+    margin-right: 8px;
+}
+
+.repository span {
+    font-size: x-large;
+}
+
+.repository.dependency span {
+    font-size: medium;
+}
+
+.dependency.dependency span.label {
+    background-color: #75caeb
+}
+
+.library:before {
+    content: "\e043";
+}
+.default:before {
+    content: "\e118";
+}
+.service:before {
+    content: "\e135";
+}
+.tool:before {
+    content: "\e136";
+}
+.spring:before {
+    content: "\e103";
+}
+.cloud:before {
+    content: "\2601";
+}
+.plug:before {
+    content: "\e019";
+}
+
+.label {
+    color: #555555;
+}
+
+.springboot img {
+    width: 5%;
+ }
+
+.springboot-equal a span {
+    color: #DC143C;
+}
+
+.springboot-up a span {
+    color: #6DB33F;
+}
+
+.springboot-down a span {
+    color: #878787;
+}

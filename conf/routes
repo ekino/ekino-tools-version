@@ -1,0 +1,16 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           controllers.HomeController.index
+GET     /clear-cache                controllers.HomeController.clearCache
+GET     /health                     controllers.HealthController.index
+GET     /repositories/:name         controllers.RepositoryController.index(name)
+GET     /dependencies               controllers.DependencyController.dependencies
+GET     /dependencies/:name         controllers.DependencyController.dependency(name)
+GET     /plugins/:pluginId          controllers.PluginController.index(pluginId)
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+

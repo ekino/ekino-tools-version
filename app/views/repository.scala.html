@@ -1,0 +1,97 @@
+@import model.DisplayRepository
+@(repository: DisplayRepository)
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>Repository versions</title>
+        <link rel="icon" href='@routes.Assets.at("images/favicon.png")' >
+        <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+    </head>
+    <body class="container">
+        <div class="col-lg-12">
+            <h1 class="repository @repository.repositoryType">
+                @repository.name
+                <span data-color="@repository.completionPercentage" class="pull-right label">
+                    @repository.completionPercentage %
+                </span>
+            </h1>
+            <form class="form-inline">
+                <h3 class="form-group">
+                    <span>@repository.repository.toolVersion</span>
+                </h3>
+                <span class="pull-right return-block">
+                    <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
+                </span>
+            </form>
+            @if(repository.repository.versions.nonEmpty) {
+
+                <table class="table table-bordered table-striped">
+                    <caption>Dependencies</caption>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Current version</th>
+                            <th>Latest version in project</th>
+                            <th>Latest Maven release</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @for(version <- repository.repository.versions.keys.toSeq) {
+                        <tr>
+                            <td class="@repository.springBootVersion(version)">
+                                <a href="@routes.DependencyController.dependency(version)" role="button">
+                                    <span>@version</span>
+                                </a>
+                                @if(repository.springBootVersion(version) != "") {
+                                    <span class="springboot"><img src="@routes.Assets.at("images/" + repository.springBootVersion(version) + ".svg")"></span>
+                                }
+                                @if(repository.isVersionUpToDate(version)) {
+                                    <span class="pull-right glyphicon glyphicon-ok" ></span>
+                                }
+                            </td>
+                            <td>@repository.getVersion(version)</td>
+                            <td>@repository.getProjectVersion(version)</td>
+                            <td>@repository.getMvnVersion(version)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+            <br/>
+            @if(repository.repository.plugins.nonEmpty) {
+
+                <table class="table table-bordered table-striped">
+                    <caption>Plugins</caption>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Current version</th>
+                            <th>Latest version in project</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @for(pluginId <- repository.repository.plugins.keys.toSeq) {
+                        <tr>
+                            <td>
+                                <a href="@routes.PluginController.index(pluginId)" role="button">
+                                    <span>@pluginId</span>
+                                </a>
+                                @if(repository.isPluginUpToDate(pluginId)) {
+                                    <span class="pull-right glyphicon glyphicon-ok" ></span>
+                                }
+                            </td>
+                            <td>@repository.getPluginVersion(pluginId)</td>
+                            <td>@repository.getProjectPluginVersion(pluginId)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+        <script src="@routes.Assets.at("javascripts/versions.js")"></script>
+    </body>
+</html>
+

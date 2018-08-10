@@ -1,0 +1,50 @@
+@import model.DisplayPlugin
+@(plugin: DisplayPlugin)
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>Plugin versions</title>
+        <link rel="icon" href='@routes.Assets.at("images/favicon.png")' >
+        <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+    </head>
+    <body class="container">
+        <div class="col-lg-12">
+            <h1>
+                @plugin.pluginId
+                @defining(plugin.getCompletionPercentage) { completionPercentage =>
+                    <span data-color="@completionPercentage" class="pull-right label">@completionPercentage %</span>
+                }
+            </h1>
+            <div class="pull-right return-block">
+                <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
+            </div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Version</th>
+                        <th>Repositories</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for(version <- plugin.versions.keys.toSeq.sortWith(plugin.sortByVersion)) {
+                    <tr>
+                        <td>@version</td>
+                        <td>
+                            <dl>
+                            @for(repository <- plugin.getRepositories(version)) {
+                                <dd><a href="@routes.RepositoryController.index(repository)" role="button">@repository</a></dd>
+                            }
+                            </dl>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <script src="@routes.Assets.at("javascripts/versions.js")"></script>
+    </body>
+</html>
+
