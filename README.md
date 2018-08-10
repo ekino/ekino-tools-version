@@ -29,18 +29,18 @@ $ ./gradlew idea
 
 ### Run in dev mode
 
-First, you have to change some properties in `application.conf`.
+First, you have to add a set of env variables:
 
-The `project.repositories.path` property should be set with the directory containing the Git repositories on your computer. If not preceded by `/`, it is relative to the current directory.
+| variable                | description     | example.                                       |
+|-------------------------|-----------------|------------------------------------------------|
+|GITLAB_URL               |url of the gitlab|"https://gitlab.ekino.com"                      |
+|GITLAB_USER              |gitlab user      |"philippe.agra"                                 |
+|GITLAB_TOKEN             |gitlab api token |"XxXxXxXxXxXxXxXxXxXx"                          |
+|GITLAB_GROUP_IDS         |gitlab group ids |"1524,626"                                      |
+|EKINO_REPOSITORY_URL     |nexus url        |"https://nexus.ekino.com/repository/public-mfg/"|
+|EKINO_REPOSITORY_USER    |nexus user.      |"philippe.agra"                                 |
+|EKINO_REPOSITORY_PASSWORD|nexus password   |"XxXxXxXx"                                      |
 
-Then add the Maven credentials.
-
-For example:
-```
-project.repositories.path = "projets/ekino/workspace"
-maven.repository.user = "my.user"   # replace by real credentials 
-maven.repository.password = "1234"
-```
 
 Then run the application with Gradle
 ```
@@ -54,20 +54,20 @@ $ ./gradlew build
 $ unzip build/distributions/playBinary.zip -d build/distributions
 $ ./build/distributions/playBinary/bin/playBinary
 ```
-Test the application on url http://localhost:9000/ekino-tools-version/
+Test the application on url http://localhost:9000/
 
 
 ### Run in docker mode
 ```bash
-$ ./gradlew buildDocker
-$ docker run -d -p 8080:8080 -v $HOME/ekino:/root/ekino ekino-tools-version:1.0.0-SNAPSHOT
+$ ./gradlew clean dist
+$ docker build . -t ekino-tools-version
+$ docker run -d -p 8080:8080 -v /tmp/versions:/tmp/versions ekino-tools-version
 ```
-Test the application on url http://localhost:8080/ekino-tools-version/
+Test the application on url http://localhost:8080/
 
 
 ## Documentation
 
-* https://www.playframework.com/documentation/2.5.x/Home
-* https://www.lightbend.com/community/core-tools/activator-and-sbt
+* https://www.playframework.com/documentation/2.6.x/Home
 * http://www.scala-lang.org/
 * http://akka.io/docs/
