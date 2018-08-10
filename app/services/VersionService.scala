@@ -20,18 +20,18 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
                                gitRepositoryService: GitRepositoryService, springBootVersionService: SpringBootVersionService) {
 
   private val filePath = configuration.get("project.repositories.path")
-  private val localMavenUrl = configuration.get("local.maven.url")
-  private val localMavenUser = configuration.getOptional("local.maven.user").getOrElse("")
-  private val localMavenPassword = configuration.getOptional("local.maven.password").getOrElse("")
-  private val localPluginsMavenUrl = configuration.get("local-plugins.maven.url")
-  private val localPluginsMavenUser = configuration.getOptional("local-plugins.maven.user").getOrElse("")
-  private val localPluginsMavenPassword = configuration.getOptional("local-plugins.maven.password").getOrElse("")
-  private val centralMavenUrl = configuration.get("central.maven.url")
-  private val centralMavenUser = configuration.getOptional("central.maven.user").getOrElse("")
-  private val centralMavenPassword = configuration.getOptional("central.maven.password").getOrElse("")
-  private val gradlePluginsMavenUrl = configuration.get("gradle-plugins.maven.url")
-  private val gradlePluginsMavenUser = configuration.getOptional("gradle-plugins.maven.user").getOrElse("")
-  private val gradlePluginsMavenPassword = configuration.getOptional("gradle-plugins.maven.password").getOrElse("")
+  private val localMavenUrl = configuration.get("maven.local.url")
+  private val localMavenUser = configuration.getOptional("maven.local.user").getOrElse("")
+  private val localMavenPassword = configuration.getOptional("maven.local.password").getOrElse("")
+  private val localPluginsMavenUrl = configuration.get("maven.local-plugins.url")
+  private val localPluginsMavenUser = configuration.getOptional("maven.local-plugins.user").getOrElse("")
+  private val localPluginsMavenPassword = configuration.getOptional("maven.local-plugins.password").getOrElse("")
+  private val centralMavenUrl = configuration.get("maven.central.url")
+  private val centralMavenUser = configuration.getOptional("maven.central.user").getOrElse("")
+  private val centralMavenPassword = configuration.getOptional("maven.central.password").getOrElse("")
+  private val gradlePluginsMavenUrl = configuration.get("maven.gradle-plugins.url")
+  private val gradlePluginsMavenUser = configuration.getOptional("maven.gradle-plugins.user").getOrElse("")
+  private val gradlePluginsMavenPassword = configuration.getOptional("maven.gradle-plugins.password").getOrElse("")
 
   private var repositories = Seq.empty[Repository]
   private var dependencies = Seq.empty[DisplayDependency]

@@ -17,7 +17,7 @@ import scala.util.matching.Regex
 @Singleton
 class MavenVersionFetcher {
 
-  val pattern: Regex = """([^:]+):(.+)""".r
+  val pattern: Regex = "([^:]+):(.+)".r
 
   // download maven-metadata to get the latest repository
   def getLatestVersion(name: String, mavenUrl: String, mavenUser: String, mavenPassword: String): Future[(String, String)] = Future {

@@ -3,7 +3,7 @@
 ## Description
 
 Tool that provides convenient version management webapp.
-It is based on Play framework, using activator, sbt, akka and Scala.
+It is based on Play framework, akka and Scala.
 
 It provides 4 views:
 * Main view: list of the repositories
@@ -31,22 +31,25 @@ $ ./gradlew idea
 
 First, you have to add a set of env variables:
 
-| variable                | description     | example.                                       |
+| Variable name           | description     | example                                        |
 |-------------------------|-----------------|------------------------------------------------|
 |GITLAB_URL               |url of the gitlab|"https://gitlab.ekino.com"                      |
 |GITLAB_USER              |gitlab user      |"philippe.agra"                                 |
 |GITLAB_TOKEN             |gitlab api token |"XxXxXxXxXxXxXxXxXxXx"                          |
 |GITLAB_GROUP_IDS         |gitlab group ids |"1524,626"                                      |
-|EKINO_REPOSITORY_URL     |nexus url        |"https://nexus.ekino.com/repository/public-mfg/"|
-|EKINO_REPOSITORY_USER    |nexus user.      |"philippe.agra"                                 |
-|EKINO_REPOSITORY_PASSWORD|nexus password   |"XxXxXxXx"                                      |
+|GITHUB_USER              |github user      |"philippeagra"                                  |
+|GITHUB_TOKEN             |github api token |"XxXxXxXxXxXxXxXxXxXx"                          |
+|GITHUB_USERS             |github users     |"ekino,philippeagra"                            |
+|LOCAL_REPOSITORY_URL     |nexus url        |"https://nexus.ekino.com/repository/public-mfg/"|
+|LOCAL_REPOSITORY_USER    |nexus user       |"philippe.agra"                                 |
+|LOCAL_REPOSITORY_PASSWORD|nexus password   |"XxXxXxXx"                                      |
 
 
 Then run the application with Gradle
 ```
 ./gradlew -t runPlayBinary
 ```
-Test the application on url http://localhost:9000/ekino-tools-version/
+Test the application on url http://localhost:9000/
 
 ### Run in binary mode
 ```bash
@@ -61,7 +64,7 @@ Test the application on url http://localhost:9000/
 ```bash
 $ ./gradlew clean dist
 $ docker build . -t ekino-tools-version
-$ docker run -d -p 8080:8080 -v /tmp/versions:/tmp/versions ekino-tools-version
+$ docker run --env-file credencials-docker --rm -p "8080:8080" -v "/tmp/versions:/tmp/versions" ekino-tools-version
 ```
 Test the application on url http://localhost:8080/
 
@@ -69,5 +72,5 @@ Test the application on url http://localhost:8080/
 ## Documentation
 
 * https://www.playframework.com/documentation/2.6.x/Home
-* http://www.scala-lang.org/
 * http://akka.io/docs/
+* http://www.scala-lang.org/

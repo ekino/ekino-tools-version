@@ -27,7 +27,7 @@ object GradleRepositoryParser extends AbstractParser {
     """[':"]""" +
     """(?:,\s*name\s*[:=]\s*['"])?""" +
     """(?<artefactId>[_a-zA-Z0-9.-]+)""" +
-    """(?:.*)(?:property\(['"]|\$\{|:)""" +
+    """(?:.*)(?:property\(['"]|\$\{?|:)""" +
     """(?<version>[_a-zA-Z0-9.-]+)""").r
   val propertyRegex: Regex = """([^ =\n]*) *= *([^ \n]*)""".r
   val projectNameRegex: Regex = """rootProject.name ?= ?(?:'|")([0-9a-zA-Z\-]+)""".r

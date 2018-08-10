@@ -13,12 +13,17 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.{Configuration, Logger}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
+import scala.language.postfixOps
+import scala.util.control.NonFatal
+
 
 @Singleton
 class GitRepositoryService @Inject()(configuration: Configuration) {
+
+  private val projectUrl = """https?:\/\/[^ \/]+\/(.*)""".r
 
   /**
     * Update all the repositories.
@@ -30,48 +35,58 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
       path.mkdirs()
     }
 
-    val sequence = Future.sequence(fetchRepositoryNames().map(updateGitRepository))
+    val eventualUnits: Seq[Future[Unit]] = fetchRepositoryNames().map(updateGitRepository)
+    val sequence = Future.sequence(eventualUnits)
 
     // waiting for all the futures
-    Await.result(sequence, Duration.Inf)
+    Await.result(sequence, 2 minute)
   }
 
   /**
     * Update a git repository.
     *
-    * @param repositoryName the repository name
+    * @param repositoryUrl the repository url
     */
-  private def updateGitRepository(repositoryName: String): Future[Unit] = Future {
+  private def updateGitRepository(repositoryUrl: String): Future[Unit] = Future {
+
+    projectUrl.findFirstMatchIn(repositoryUrl) match {
+      case Some(value) => updateGitRepository(repositoryUrl, value.group(1))
+      case _           => Logger.error(s"error with $repositoryUrl")
+    }
+  }
+
+  private def updateGitRepository(repositoryUrl: String, repositoryName: String): Unit = {
+
     val repositoryDirectory = new File(getProperty("project.repositories.path"), repositoryName)
 
     if (repositoryDirectory.exists()) {
-      pullRepository(repositoryName, repositoryDirectory)
+      pullRepository(repositoryUrl, repositoryDirectory)
     } else {
-      cloneRepository(repositoryName, repositoryDirectory)
+      cloneRepository(repositoryUrl, repositoryDirectory)
     }
   }
 
   /**
     * Update a git repository using git pull.
     *
-    * @param repositoryName      the repository name
+    * @param repositoryUrl     the repository url
     * @param repositoryDirectory the repository directory
     */
-  private def pullRepository(repositoryName: String, repositoryDirectory: File): Unit = {
+  private def pullRepository(repositoryUrl: String, repositoryDirectory: File): Unit = {
     val git = new Git(new FileRepository(repositoryDirectory.getAbsolutePath + "/.git"))
 
     val command = git
       .pull()
       .setRebase(true)
-      .setCredentialsProvider(getUserCredentials)
+      .setCredentialsProvider(getUserCredentials(repositoryUrl))
 
     try {
       command.call()
-      Logger.info(s"$repositoryName repository pulled")
+      Logger.info(s"$repositoryUrl repository pulled")
     } catch {
       // empty repository
-      case _: RefNotAdvertisedException => Logger.warn(s"Skipping repository $repositoryName (empty repository)")
-      case e: Exception => Logger.error(s"Skipping repository $repositoryName", e)
+      case _: RefNotAdvertisedException => Logger.warn(s"Skipping repository $repositoryUrl (empty repository)")
+      case e: Exception => Logger.error(s"Skipping repository $repositoryUrl", e)
     }
   }
 
@@ -81,21 +96,22 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
     * @param repositoryName      the repository name
     * @param repositoryDirectory the repository directory
     */
-  private def cloneRepository(repositoryName: String, repositoryDirectory: File): Unit = {
-    Logger.info(s"Cloning repository $repositoryName")
+  private def cloneRepository(repositoryUrl: String, repositoryDirectory: File): Unit = {
+
+    Logger.info(s"Cloning repository $repositoryUrl")
 
     val cloneCommand = Git.cloneRepository
 
-    cloneCommand.setURI(getProperty("gitlab.url") + "/" + repositoryName + ".git")
+    cloneCommand.setURI(repositoryUrl + ".git")
 
-    cloneCommand.setCredentialsProvider(getUserCredentials)
+    cloneCommand.setCredentialsProvider(getUserCredentials(repositoryUrl))
     cloneCommand.setDirectory(repositoryDirectory)
 
     try {
       cloneCommand.call()
-      Logger.info(s"$repositoryName repository cloned")
+      Logger.info(s"$repositoryUrl repository cloned")
     } catch {
-      case e: Exception => Logger.error(s"Skipping repository $repositoryName", e)
+      case e: Exception => Logger.error(s"Skipping repository $repositoryUrl", e)
     }
   }
 
@@ -107,24 +123,33 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
   private def fetchRepositoryNames(): Seq[String] = {
     Logger.info("Fetching repositories from gitlab")
 
-    val groupIds = getProperty("gitlab.group.ids")
+    val gitlabGroupIds = getProperty("gitlab.group-ids")
 
-    groupIds
+    val gitlabNames = gitlabGroupIds
       .split(',')
       .filter(_.nonEmpty)
-      .flatMap(groupId => fetchRepositoryNames(groupId))
+      .flatMap(groupId => fetchGitlabRepositoryNames(groupId))
+
+    val githubUsers = getProperty("github.users")
+
+    val githubNames = githubUsers
+      .split(',')
+      .filter(_.nonEmpty)
+      .flatMap(groupId => fetchGithubRepositoryNames(groupId))
+
+    gitlabNames ++ githubNames
   }
 
   /**
-    * Fetch the repository names for the given groupId using gitlab api.
+    * Fetch the gitlab repository names for the given groupId using gitlab api.
     *
     * @param groupId The gitlab group id
     * @return a sequence of all the repository names
     */
-  private def fetchRepositoryNames(groupId: String): Seq[String] = {
+  private def fetchGitlabRepositoryNames(groupId: String): Seq[String] = {
 
     // gitlab api url
-    val url: String = getProperty("gitlab.url") + "/api/v4/groups/" + groupId + "/projects?per_page=1000"
+    val url: String = s"${getProperty("gitlab.url")}/api/v4/groups/$groupId/projects?per_page=1000"
 
     val connection = new URL(url).openConnection
     connection.setRequestProperty("PRIVATE-TOKEN", getProperty("gitlab.token"))
@@ -133,20 +158,49 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
     // getting the project list of gitlab group
     val repositories = Json.parse(result)
-    val ignored = getPropertyList("gitlab.ignored.repository")
-    val additionalRepositories = getPropertyList("gitlab.additional.repository")
+    val ignored = getPropertyList("gitlab.ignored-repositories")
 
-    Logger.info("ignored repositories: " + ignored)
+    Logger.info(s"ignored repositories: $ignored")
 
     val names = repositories.as[Seq[JsValue]]
       .map(repository => (repository \ "path_with_namespace").as[String])
+      .filter(name => !name.contains(ignored))
+      .map(getProperty("gitlab.url") + "/" + _)
+
+    Logger.info(s"gitlab repositories: $names")
+
+    names
+
+  }
+
+  /**
+    * Fetch the repository names for the given groupId using gitlab api.
+    *
+    * @param user The gitlab user id
+    * @return a sequence of all the repository names
+    */
+  private def fetchGithubRepositoryNames(user: String): Seq[String] = {
+
+    // gitlab api url
+    val url: String = s"https://api.github.com/users/$user/repos?access_token${getProperty("github.token")}&per_page=100"
+
+    val connection = new URL(url).openConnection
+
+    val result = Source.fromInputStream(connection.getInputStream).mkString
+
+    // getting the project list of github user
+    val repositories = Json.parse(result)
+    val ignored = getPropertyList("github.ignored-repositories")
+
+    Logger.info(s"ignored repositories: $ignored")
+
+    val names = repositories.as[Seq[JsValue]]
+      .map(repository => (repository \ "html_url").as[String])
       .filter(name => !ignored.contains(name))
 
-    val allNames = names ++ additionalRepositories
+    Logger.info(s"github repositories: $names")
 
-    Logger.info("repositories: " + allNames)
-
-    allNames
+    names
 
   }
 
@@ -154,9 +208,11 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
   private def getPropertyList(property: String) = configuration.get[Seq[String]](property)
 
-  private def getUserCredentials = {
-    new UsernamePasswordCredentialsProvider(
-      getProperty("gitlab.user"), getProperty("gitlab.token")
-    )
+  private def getUserCredentials(repository: String) = {
+    if (repository.contains(getProperty("gitlab.url"))) {
+      new UsernamePasswordCredentialsProvider(getProperty("gitlab.user"), getProperty("gitlab.token"))
+    } else {
+      new UsernamePasswordCredentialsProvider(getProperty("github.user"), getProperty("gitlab.token"))
+    }
   }
 }

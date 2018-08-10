@@ -1,13 +1,10 @@
-language: java
-
-jdk:
-  - oraclejdk8
+language: scala
+jdk: openjdk8
 
 # cache between builds
 cache:
   directories:
   - $HOME/.m2
   - $HOME/.gradle
-
-script:
-  - ./gradlew dist
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt
