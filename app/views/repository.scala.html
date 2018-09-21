@@ -34,8 +34,8 @@
                         <tr>
                             <th>Name</th>
                             <th>Current version</th>
-                            <th>Latest version in project</th>
-                            <th>Latest Maven release</th>
+                            <th>Latest version used</th>
+                            <th>Latest release</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -52,9 +52,9 @@
                                     <span class="pull-right glyphicon glyphicon-ok" ></span>
                                 }
                             </td>
-                            <td>@repository.getVersion(version)</td>
-                            <td>@repository.getProjectVersion(version)</td>
-                            <td>@repository.getMvnVersion(version)</td>
+                            <td>@repository.getDependencyVersion(version)</td>
+                            <td>@repository.getLocalDependencyVersion(version)</td>
+                            <td>@repository.getCentralDependencyVersion(version)</td>
                         </tr>
                     }
                     </tbody>
@@ -69,7 +69,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Current version</th>
-                            <th>Latest version in project</th>
+                            <th>Latest version used</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,7 +84,7 @@
                                 }
                             </td>
                             <td>@repository.getPluginVersion(pluginId)</td>
-                            <td>@repository.getProjectPluginVersion(pluginId)</td>
+                            <td>@repository.getLocalPluginVersion(pluginId)</td>
                         </tr>
                     }
                     </tbody>
