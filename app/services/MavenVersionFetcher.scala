@@ -2,10 +2,9 @@ package services
 
 import java.net.URL
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
 import org.apache.commons.codec.binary.Base64
-import play.api.ConfigLoader.stringLoader
-import play.api.{Configuration, Logger}
+import play.api.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -16,18 +15,18 @@ import scala.util.matching.Regex
   * Download metadata from a maven url and return a Future of the last release.
   */
 @Singleton
-class MavenVersionFetcher @Inject()(configuration: Configuration) {
+class MavenVersionFetcher {
 
   val pattern: Regex = """([^:]+):(.+)""".r
 
   // download maven-metadata to get the latest repository
-  def getLatestMvnVersion(name: String, mavenUrl: String): Future[(String, String)] = Future {
+  def getLatestMvnVersion(name: String, mavenUrl: String, mavenUser: String, mavenPassword: String): Future[(String, String)] = Future {
 
     var uri: String = null
     try {
       pattern.findAllIn(name).matchData foreach {
         matchData => {
-          uri = matchData.group(1).replaceAll("[\\.]", "/") + "/" + matchData.group(2)
+          uri = matchData.group(1).replace('.', '/') + "/" + matchData.group(2)
         }
       }
 
@@ -35,11 +34,11 @@ class MavenVersionFetcher @Inject()(configuration: Configuration) {
       val url = mavenUrl + uri + "/maven-metadata.xml"
 
       val connection = new URL(url).openConnection
-      connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION,
-        HttpBasicAuth.getHeader(
-          configuration.get("maven.repository.user"),
-          configuration.get("maven.repository.password"))
-      )
+      if (!mavenUser.isEmpty && !mavenPassword.isEmpty) {
+        connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION,
+          HttpBasicAuth.getHeader(mavenUser, mavenPassword)
+        )
+      }
 
       val html = Source.fromInputStream(connection.getInputStream)
       val xmlFromString = scala.xml.XML.loadString(html.mkString)
@@ -50,7 +49,10 @@ class MavenVersionFetcher @Inject()(configuration: Configuration) {
 
     } catch {
       case _: java.io.FileNotFoundException => (name, "")
-      case _: Exception => (name, "")
+      case e: Exception => {
+        Logger.error(s"Unexpected exception for $name", e)
+        (name, "")
+      }
     }
 
   }

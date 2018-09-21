@@ -20,8 +20,12 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
                                gitRepositoryService: GitRepositoryService, springBootVersionService: SpringBootVersionService) {
 
   private val filePath = configuration.get("project.repositories.path")
-  private val ekinoMavenUrl = configuration.get("maven.repository.url")
+  private val localMavenUrl = configuration.get("local.maven.url")
+  private val localMavenUser = configuration.getOptional("local.maven.user").getOrElse("")
+  private val localMavenPassword = configuration.getOptional("local.maven.password").getOrElse("")
   private val centralMavenUrl = configuration.get("central.maven.url")
+  private val centralMavenUser = configuration.getOptional("central.maven.user").getOrElse("")
+  private val centralMavenPassword = configuration.getOptional("central.maven.password").getOrElse("")
 
   private var repositories = Seq.empty[Repository]
   private var dependencies = Seq.empty[DisplayDependency]
@@ -222,10 +226,10 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
           mergedValues += v._1 -> v._2
         }
         if (mvnProjectFutures.get(v._1).isEmpty) {
-          mvnProjectFutures += v._1 -> fetcher.getLatestMvnVersion(v._1, ekinoMavenUrl)
+          mvnProjectFutures += v._1 -> fetcher.getLatestMvnVersion(v._1, localMavenUrl, localMavenUser, localMavenPassword)
         }
         if (mvnCentralFutures.get(v._1).isEmpty) {
-          mvnCentralFutures += v._1 -> fetcher.getLatestMvnVersion(v._1, centralMavenUrl)
+          mvnCentralFutures += v._1 -> fetcher.getLatestMvnVersion(v._1, centralMavenUrl, centralMavenUser, centralMavenPassword)
         }
       })
     )
