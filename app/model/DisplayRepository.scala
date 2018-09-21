@@ -6,8 +6,10 @@ import utils.VersionComparator
 /**
   * Repository DTO.
   */
-case class DisplayRepository(repository: Repository, mergedValues: Map[String, String], mvnValues: Map[String, String],
-                             pluginValues: Map[String, String]) {
+case class DisplayRepository(repository: Repository,
+                             localDependencies: Map[String, String],
+                             centralDependencies: Map[String, String],
+                             localPlugins: Map[String, String]) {
 
   val name: String = repository.name
   val repositoryType: String = getRepositoryType(repository.name)
@@ -20,16 +22,16 @@ case class DisplayRepository(repository: Repository, mergedValues: Map[String, S
     * @return True when the dependency is up to date
     */
   def isVersionUpToDate(dependency: String): Boolean = {
-    val version = getVersion(dependency)
-    var reference = getMvnVersion(dependency)
-    if (reference.isEmpty) reference = getProjectVersion(dependency)
+    val version = getDependencyVersion(dependency)
+    var reference = getCentralDependencyVersion(dependency)
+    if (reference.isEmpty) reference = getLocalDependencyVersion(dependency)
     VersionComparator.versionCompare(version, reference) >= 0
   }
 
   def springBootVersion(dependency: String): String = {
     if (repository.springBootData != null && repository.springBootData.artefacts.contains(dependency)
       && repository.plugins.contains("org.springframework.boot")) {
-      val compare = VersionComparator.versionCompare(getVersion(dependency), repository.springBootData.properties(repository.springBootData.artefacts(dependency)))
+      val compare = VersionComparator.versionCompare(getDependencyVersion(dependency), repository.springBootData.properties(repository.springBootData.artefacts(dependency)))
       if (compare == 0) {
         "springboot-equal"
       } else if (compare > 0) {
@@ -50,15 +52,15 @@ case class DisplayRepository(repository: Repository, mergedValues: Map[String, S
     */
   def isPluginUpToDate(pluginId: String): Boolean = {
     val pluginVersion = getPluginVersion(pluginId)
-    val projectPluginVersion = getProjectPluginVersion(pluginId)
-    VersionComparator.versionCompare(pluginVersion, projectPluginVersion) >= 0
+    val localPluginVersion = getLocalPluginVersion(pluginId)
+    VersionComparator.versionCompare(pluginVersion, localPluginVersion) >= 0
   }
 
-  def getProjectVersion(dependency: String): String = mergedValues.getOrElse(dependency, null)
-  def getMvnVersion(dependency: String): String = mvnValues.getOrElse(dependency, null)
-  def getVersion(dependency: String): String = repository.versions.getOrElse(dependency, null)
+  def getDependencyVersion(dependency: String): String = repository.versions.getOrElse(dependency, null)
+  def getLocalDependencyVersion(dependency: String): String = localDependencies.getOrElse(dependency, null)
+  def getCentralDependencyVersion(dependency: String): String = centralDependencies.getOrElse(dependency, null)
   def getPluginVersion(pluginId: String): String = repository.plugins.getOrElse(pluginId, null)
-  def getProjectPluginVersion(pluginId: String): String = pluginValues.getOrElse(pluginId, null)
+  def getLocalPluginVersion(pluginId: String): String = localPlugins.getOrElse(pluginId, null)
   def project(): String = repository.group
 
   implicit class Regex(sc: StringContext) {

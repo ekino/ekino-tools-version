@@ -20,7 +20,7 @@ class MavenVersionFetcher {
   val pattern: Regex = """([^:]+):(.+)""".r
 
   // download maven-metadata to get the latest repository
-  def getLatestMvnVersion(name: String, mavenUrl: String, mavenUser: String, mavenPassword: String): Future[(String, String)] = Future {
+  def getLatestVersion(name: String, mavenUrl: String, mavenUser: String, mavenPassword: String): Future[(String, String)] = Future {
 
     var uri: String = null
     try {

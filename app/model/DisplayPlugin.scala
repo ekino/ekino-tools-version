@@ -5,7 +5,7 @@ import utils.VersionComparator
 /**
   * Dependency DTO.
   */
-case class DisplayPlugin(pluginId: String, projectVersion: String) {
+case class DisplayPlugin(pluginId: String, localVersion: String) {
   var versions: Map[String, Set[String]] = Map.empty[String, Set[String]]
 
   def getRepositories(plugin: String): Seq[String] = {
@@ -30,7 +30,7 @@ case class DisplayPlugin(pluginId: String, projectVersion: String) {
     }
     val size = versions.values.flatten.size
     val count = versions
-      .filterKeys(version => VersionComparator.versionCompare(version, projectVersion) >= 0)
+      .filterKeys(version => VersionComparator.versionCompare(version, localVersion) >= 0)
       .values.flatten.size
 
     val result = 100d * count / size

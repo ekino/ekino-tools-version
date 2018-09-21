@@ -30,9 +30,9 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private var repositories = Seq.empty[Repository]
   private var dependencies = Seq.empty[DisplayDependency]
   private var plugins = Seq.empty[DisplayPlugin]
-  private var mergedValues = Map.empty[String, String]
-  private var mvnValues = Map.empty[String, String]
-  private var pluginValues = Map.empty[String, String]
+  private var localDependencies = Map.empty[String, String]
+  private var centralDependencies = Map.empty[String, String]
+  private var localPlugins = Map.empty[String, String]
   private var springBootDefaultData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
   private var springBootMasterData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
 
@@ -55,13 +55,13 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
 
     computeRepositories(workspace)
 
-    computeProjectPlugins()
+    computePluginVersions()
 
-    computeVersions()
-
-    computeDependencies()
+    computeDependencyVersions()
 
     computePlugins()
+
+    computeDependencies()
 
     Logger.info("took " + (System.currentTimeMillis - start) + " ms to get data")
   }
@@ -76,7 +76,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
       fetchRepositories()
     }
     repositories
-      .map(DisplayRepository(_, mergedValues, mvnValues, pluginValues))
+      .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins))
       .groupBy(_.project())
       .map(e => Project(e._1, e._2.sortBy(_.name)))
       .toSeq
@@ -94,7 +94,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
       fetchRepositories()
     }
     repositories.find(name == _.name)
-      .map(DisplayRepository(_, mergedValues, mvnValues, pluginValues))
+      .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins))
       .orNull
   }
 
@@ -110,7 +110,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     }
     val option: Option[DisplayDependency] = dependencies.find(_.name == name)
     if (option.isEmpty) {
-      val dependency = DisplayDependency(name, mvnValues.getOrElse(name, null))
+      val dependency = DisplayDependency(name, centralDependencies.getOrElse(name, null))
       dependencies :+= dependency
       dependency
     } else option.get
@@ -128,7 +128,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     }
     val option: Option[DisplayPlugin] = plugins.find(_.pluginId == pluginId)
     if (option.isEmpty) {
-      val plugin = DisplayPlugin(pluginId, pluginValues.getOrElse(pluginId, null))
+      val plugin = DisplayPlugin(pluginId, localPlugins.getOrElse(pluginId, null))
       plugins :+= plugin
       plugin
     } else option.get
@@ -143,9 +143,9 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     repositories = Seq.empty[Repository]
     dependencies = Seq.empty[DisplayDependency]
     plugins = Seq.empty[DisplayPlugin]
-    mergedValues = Map.empty[String, String]
-    mvnValues = Map.empty[String, String]
-    pluginValues = Map.empty[String, String]
+    localDependencies = Map.empty[String, String]
+    centralDependencies = Map.empty[String, String]
+    localPlugins = Map.empty[String, String]
   }
 
   /**
@@ -187,15 +187,49 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   }
 
   /**
-    * Compute dependency map from repositories
+    * Compute local plugin versions.
     */
-  private def computeDependencies(): Unit = {
+  private def computePluginVersions(): Unit = {
+
     repositories.foreach(r => {
-      r.versions.foreach(t => {
-        val dependency = getDependency(t._1)
-        dependency.versions += t._2 -> (dependency.versions.getOrElse(t._2, Set.empty[String]) + r.name)
+      r.plugins.foreach(v => {
+        if (isHigherVersion(localPlugins.get(v._1), v._2)) {
+          localPlugins += v._1 -> v._2
+        }
       })
     })
+  }
+
+  /**
+    * Compute local and central versions.
+    */
+  private def computeDependencyVersions(): Unit = {
+    var localDependencyFutures = Map.empty[String, Future[(String, String)]]
+    var centralDependencyFutures = Map.empty[String, Future[(String, String)]]
+
+    repositories.foreach(r => {
+      r.versions.foreach(v => {
+        if (isHigherVersion(localDependencies.get(v._1), v._2)) {
+          localDependencies += v._1 -> v._2
+        }
+        if (!localDependencyFutures.contains(v._1)) {
+          localDependencyFutures += v._1 -> fetcher.getLatestVersion(v._1, localMavenUrl, localMavenUser, localMavenPassword)
+        }
+        if (!centralDependencyFutures.contains(v._1)) {
+          centralDependencyFutures += v._1 -> fetcher.getLatestVersion(v._1, centralMavenUrl, centralMavenUser, centralMavenPassword)
+        }
+      })
+    })
+    val sequence = Future.sequence(centralDependencyFutures.values ++ localDependencyFutures.values)
+
+    // waiting for all the futures
+    val list = Await.result(sequence, Duration.Inf)
+
+    list.foreach { element =>
+      if (isHigherVersion(centralDependencies.get(element._1), element._2)) {
+        centralDependencies += element._1 -> element._2
+      }
+    }
   }
 
   /**
@@ -211,55 +245,19 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   }
 
   /**
-    * Compute project and maven versions.
+    * Compute dependency map from repositories
     */
-  private def computeVersions(): Unit = {
-    var mvnProjectFutures = Map.empty[String, Future[(String, String)]]
-    var mvnCentralFutures = Map.empty[String, Future[(String, String)]]
-
-    repositories.foreach(
-      _.versions.foreach(v => {
-        val other = mergedValues.get(v._1)
-        if (other.isEmpty) {
-          mergedValues += v._1 -> v._2
-        } else if (VersionComparator.versionCompare(mergedValues(v._1), v._2) < 0) {
-          mergedValues += v._1 -> v._2
-        }
-        if (mvnProjectFutures.get(v._1).isEmpty) {
-          mvnProjectFutures += v._1 -> fetcher.getLatestMvnVersion(v._1, localMavenUrl, localMavenUser, localMavenPassword)
-        }
-        if (mvnCentralFutures.get(v._1).isEmpty) {
-          mvnCentralFutures += v._1 -> fetcher.getLatestMvnVersion(v._1, centralMavenUrl, centralMavenUser, centralMavenPassword)
-        }
+  private def computeDependencies(): Unit = {
+    repositories.foreach(r => {
+      r.versions.foreach(t => {
+        val dependency = getDependency(t._1)
+        dependency.versions += t._2 -> (dependency.versions.getOrElse(t._2, Set.empty[String]) + r.name)
       })
-    )
-    val sequence = Future.sequence(mvnCentralFutures.values ++ mvnProjectFutures.values)
-
-    // waiting for all the futures
-    val list = Await.result(sequence, Duration.Inf)
-
-    list.foreach { element =>
-      if (!mvnValues.keySet.contains(element._1) || VersionComparator.versionCompare(element._2, mvnValues(element._1)) > 0) {
-        mvnValues += element._1 -> element._2
-      }
-    }
+    })
   }
 
-  /**
-    * Compute project and maven plugin versions.
-    */
-  private def computeProjectPlugins(): Unit = {
-
-    repositories.foreach(
-      _.plugins.foreach(v => {
-        val other = pluginValues.get(v._1)
-        if (other.isEmpty) {
-          pluginValues += v._1 -> v._2
-        } else if (VersionComparator.versionCompare(pluginValues(v._1), v._2) < 0) {
-          pluginValues += v._1 -> v._2
-        }
-      })
-    )
+  private def isHigherVersion(existingVersion: Option[String], newVersion: String): Boolean = {
+    existingVersion.isEmpty || VersionComparator.versionCompare(existingVersion.get, newVersion) < 0
   }
 
   private def computeSpringBootData(): Unit = {
