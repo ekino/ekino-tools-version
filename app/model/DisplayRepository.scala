@@ -9,7 +9,8 @@ import utils.VersionComparator
 case class DisplayRepository(repository: Repository,
                              localDependencies: Map[String, String],
                              centralDependencies: Map[String, String],
-                             localPlugins: Map[String, String]) {
+                             localPlugins: Map[String, String],
+                             gradlePlugins: Map[String, String]) {
 
   val name: String = repository.name
   val repositoryType: String = getRepositoryType(repository.name)
@@ -51,16 +52,18 @@ case class DisplayRepository(repository: Repository,
     * @return True when the plugin is up to date
     */
   def isPluginUpToDate(pluginId: String): Boolean = {
-    val pluginVersion = getPluginVersion(pluginId)
-    val localPluginVersion = getLocalPluginVersion(pluginId)
-    VersionComparator.versionCompare(pluginVersion, localPluginVersion) >= 0
+    val version = getPluginVersion(pluginId)
+    var reference = getGradlePluginVersion(pluginId)
+    if (reference.isEmpty) reference = getLocalPluginVersion(pluginId)
+    VersionComparator.versionCompare(version, reference) >= 0
   }
 
-  def getDependencyVersion(dependency: String): String = repository.versions.getOrElse(dependency, null)
-  def getLocalDependencyVersion(dependency: String): String = localDependencies.getOrElse(dependency, null)
-  def getCentralDependencyVersion(dependency: String): String = centralDependencies.getOrElse(dependency, null)
-  def getPluginVersion(pluginId: String): String = repository.plugins.getOrElse(pluginId, null)
-  def getLocalPluginVersion(pluginId: String): String = localPlugins.getOrElse(pluginId, null)
+  def getDependencyVersion(dependency: String): String = repository.versions.getOrElse(dependency, "")
+  def getLocalDependencyVersion(dependency: String): String = localDependencies.getOrElse(dependency, "")
+  def getCentralDependencyVersion(dependency: String): String = centralDependencies.getOrElse(dependency, "")
+  def getPluginVersion(pluginId: String): String = repository.plugins.getOrElse(pluginId, "")
+  def getLocalPluginVersion(pluginId: String): String = localPlugins.getOrElse(pluginId, "")
+  def getGradlePluginVersion(pluginId: String): String = gradlePlugins.getOrElse(pluginId, "")
   def project(): String = repository.group
 
   implicit class Regex(sc: StringContext) {

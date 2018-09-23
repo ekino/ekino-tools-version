@@ -23,9 +23,15 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private val localMavenUrl = configuration.get("local.maven.url")
   private val localMavenUser = configuration.getOptional("local.maven.user").getOrElse("")
   private val localMavenPassword = configuration.getOptional("local.maven.password").getOrElse("")
+  private val localPluginsMavenUrl = configuration.get("local-plugins.maven.url")
+  private val localPluginsMavenUser = configuration.getOptional("local-plugins.maven.user").getOrElse("")
+  private val localPluginsMavenPassword = configuration.getOptional("local-plugins.maven.password").getOrElse("")
   private val centralMavenUrl = configuration.get("central.maven.url")
   private val centralMavenUser = configuration.getOptional("central.maven.user").getOrElse("")
   private val centralMavenPassword = configuration.getOptional("central.maven.password").getOrElse("")
+  private val gradlePluginsMavenUrl = configuration.get("gradle-plugins.maven.url")
+  private val gradlePluginsMavenUser = configuration.getOptional("gradle-plugins.maven.user").getOrElse("")
+  private val gradlePluginsMavenPassword = configuration.getOptional("gradle-plugins.maven.password").getOrElse("")
 
   private var repositories = Seq.empty[Repository]
   private var dependencies = Seq.empty[DisplayDependency]
@@ -33,6 +39,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private var localDependencies = Map.empty[String, String]
   private var centralDependencies = Map.empty[String, String]
   private var localPlugins = Map.empty[String, String]
+  private var gradlePlugins = Map.empty[String, String]
   private var springBootDefaultData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
   private var springBootMasterData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
 
@@ -76,7 +83,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
       fetchRepositories()
     }
     repositories
-      .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins))
+      .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins, gradlePlugins))
       .groupBy(_.project())
       .map(e => Project(e._1, e._2.sortBy(_.name)))
       .toSeq
@@ -94,7 +101,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
       fetchRepositories()
     }
     repositories.find(name == _.name)
-      .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins))
+      .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins, gradlePlugins))
       .orNull
   }
 
@@ -110,7 +117,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     }
     val option: Option[DisplayDependency] = dependencies.find(_.name == name)
     if (option.isEmpty) {
-      val dependency = DisplayDependency(name, centralDependencies.getOrElse(name, null))
+      val dependency = DisplayDependency(name, centralDependencies.getOrElse(name, ""))
       dependencies :+= dependency
       dependency
     } else option.get
@@ -128,7 +135,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     }
     val option: Option[DisplayPlugin] = plugins.find(_.pluginId == pluginId)
     if (option.isEmpty) {
-      val plugin = DisplayPlugin(pluginId, localPlugins.getOrElse(pluginId, null))
+      val plugin = DisplayPlugin(pluginId, localPlugins.getOrElse(pluginId, ""))
       plugins :+= plugin
       plugin
     } else option.get
@@ -146,6 +153,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     localDependencies = Map.empty[String, String]
     centralDependencies = Map.empty[String, String]
     localPlugins = Map.empty[String, String]
+    gradlePlugins = Map.empty[String, String]
   }
 
   /**
@@ -190,15 +198,36 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     * Compute local plugin versions.
     */
   private def computePluginVersions(): Unit = {
+    var localPluginFutures = Map.empty[String, Future[(String, String)]]
+    var gradlePluginFutures = Map.empty[String, Future[(String, String)]]
 
     repositories.foreach(r => {
       r.plugins.foreach(v => {
         if (isHigherVersion(localPlugins.get(v._1), v._2)) {
           localPlugins += v._1 -> v._2
         }
+        if (!localPluginFutures.contains(v._1)) {
+          localPluginFutures += v._1 -> fetcher.getLatestVersion(getPluginCoordinates(v._1), localPluginsMavenUrl, localPluginsMavenUser, localPluginsMavenPassword)
+        }
+        if (!gradlePluginFutures.contains(v._1)) {
+          gradlePluginFutures += v._1 -> fetcher.getLatestVersion(getPluginCoordinates(v._1), gradlePluginsMavenUrl, gradlePluginsMavenUser, gradlePluginsMavenPassword)
+        }
       })
     })
+    val sequence = Future.sequence(gradlePluginFutures.values ++ localPluginFutures.values)
+
+    // waiting for all the futures
+    val list = Await.result(sequence, Duration.Inf)
+
+    list.foreach { element =>
+      val pluginId = element._1.split(':')(0)
+      if (isHigherVersion(gradlePlugins.get(pluginId), element._2)) {
+        gradlePlugins += pluginId -> element._2
+      }
+    }
   }
+
+  private def getPluginCoordinates(pluginId: String): String = pluginId + ":" + pluginId + ".gradle.plugin"
 
   /**
     * Compute local and central versions.
