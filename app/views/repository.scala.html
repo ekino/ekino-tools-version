@@ -70,6 +70,7 @@
                             <th>Name</th>
                             <th>Current version</th>
                             <th>Latest version used</th>
+                            <th>Latest release</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,6 +86,7 @@
                             </td>
                             <td>@repository.getPluginVersion(pluginId)</td>
                             <td>@repository.getLocalPluginVersion(pluginId)</td>
+                            <td>@repository.getGradlePluginVersion(pluginId)</td>
                         </tr>
                     }
                     </tbody>
