@@ -10,14 +10,12 @@ import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import play.api.ConfigLoader.stringLoader
 import play.api.libs.json.{JsValue, Json}
-import play.api.{Configuration, Logger}
+import play.api.{ConfigLoader, Configuration, Logger}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
-import scala.util.control.NonFatal
 
 
 @Singleton
@@ -39,7 +37,8 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
     val sequence = Future.sequence(eventualUnits)
 
     // waiting for all the futures
-    Await.result(sequence, 2 minute)
+    val timeout = configuration.get("timeout.git-update")(ConfigLoader.finiteDurationLoader)
+    Await.result(sequence, timeout)
   }
 
   /**

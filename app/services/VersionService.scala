@@ -5,11 +5,10 @@ import java.io.File
 import javax.inject.{Inject, Singleton}
 import model._
 import play.api.ConfigLoader.stringLoader
-import play.api.{Configuration, Logger}
+import play.api.{ConfigLoader, Configuration, Logger}
 import utils.{GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser, VersionComparator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 /**
@@ -217,7 +216,8 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     val sequence = Future.sequence(gradlePluginFutures.values ++ localPluginFutures.values)
 
     // waiting for all the futures
-    val list = Await.result(sequence, Duration.Inf)
+    val timeout = configuration.get("timeout.compute-plugins")(ConfigLoader.finiteDurationLoader)
+    val list = Await.result(sequence, timeout)
 
     list.foreach { element =>
       val pluginId = element._1.split(':')(0)
@@ -252,7 +252,8 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     val sequence = Future.sequence(centralDependencyFutures.values ++ localDependencyFutures.values)
 
     // waiting for all the futures
-    val list = Await.result(sequence, Duration.Inf)
+    val timeout = configuration.get("timeout.compute-versions")(ConfigLoader.finiteDurationLoader)
+    val list = Await.result(sequence, timeout)
 
     list.foreach { element =>
       if (isHigherVersion(centralDependencies.get(element._1), element._2)) {
