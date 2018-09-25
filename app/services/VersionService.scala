@@ -3,12 +3,12 @@ package services
 import java.io.File
 
 import javax.inject.{Inject, Singleton}
+import model.CustomExecutionContext.executionContextExecutor
 import model._
 import play.api.ConfigLoader.stringLoader
 import play.api.{ConfigLoader, Configuration, Logger}
 import utils.{GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser, VersionComparator}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
 /**

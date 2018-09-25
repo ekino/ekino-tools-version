@@ -2,10 +2,10 @@ package job
 
 import akka.actor.{ActorRef, ActorSystem}
 import javax.inject.{Inject, Named}
+import model.CustomExecutionContext.executionContextExecutor
 import play.api.ConfigLoader.finiteDurationLoader
 import play.api.Configuration
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
 /**

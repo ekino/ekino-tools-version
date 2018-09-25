@@ -3,10 +3,10 @@ package services
 import java.net.URL
 
 import javax.inject.Singleton
+import model.CustomExecutionContext.executionContextExecutor
 import org.apache.commons.codec.binary.Base64
 import play.api.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.matching.Regex

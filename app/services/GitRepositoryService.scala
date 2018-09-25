@@ -4,6 +4,7 @@ import java.io.File
 import java.net.URL
 
 import javax.inject.{Inject, Singleton}
+import model.CustomExecutionContext.executionContextExecutor
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.RefNotAdvertisedException
 import org.eclipse.jgit.internal.storage.file.FileRepository
@@ -12,7 +13,6 @@ import play.api.ConfigLoader.stringLoader
 import play.api.libs.json.{JsValue, Json}
 import play.api.{ConfigLoader, Configuration, Logger}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
@@ -92,7 +92,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
   /**
     * Clone a git repository into workspace.
     *
-    * @param repositoryName      the repository name
+    * @param repositoryUrl       the repository url
     * @param repositoryDirectory the repository directory
     */
   private def cloneRepository(repositoryUrl: String, repositoryDirectory: File): Unit = {
@@ -173,14 +173,14 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
   }
 
   /**
-    * Fetch the repository names for the given groupId using gitlab api.
+    * Fetch the repository names for the given user using github api.
     *
-    * @param user The gitlab user id
+    * @param user The github user name
     * @return a sequence of all the repository names
     */
   private def fetchGithubRepositoryNames(user: String): Seq[String] = {
 
-    // gitlab api url
+    // github api url
     val url: String = s"https://api.github.com/users/$user/repos?access_token${getProperty("github.token")}&per_page=100"
 
     val connection = new URL(url).openConnection

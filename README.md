@@ -1,15 +1,18 @@
 # Ekino Tools Versions
 
+[![Build Status](https://travis-ci.org/ekino/ekino-tools-version.svg?branch=master)](https://travis-ci.org/ekino/ekino-tools-version)
+
 ## Description
 
 Tool that provides convenient version management webapp.
 It is based on Play framework, akka and Scala.
 
-It provides 4 views:
+It provides 5 views:
 * Main view: list of the repositories
 * Repository Details: all the versions and plugins of a given repository
+* Dependencies: list of the dependencies
 * Dependency Details: all the repositories using the dependency
-* Plugin Details: all the repositories using the plugin (only for gradle )
+* Plugin Details: all the repositories using the plugin
 
 
 ## Requirements
