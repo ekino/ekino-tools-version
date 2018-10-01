@@ -38,7 +38,7 @@ object GradleRepositoryParser extends AbstractParser {
     """\s*version\s+""" +
     """['"]([_a-zA-Z0-9.-]+)['"]""").r
 
-  def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
+  def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     // project files
     val repositoryPath = file.getPath
     val buildFile = getBuildFile(file)
@@ -62,10 +62,10 @@ object GradleRepositoryParser extends AbstractParser {
       val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
       val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
       val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
-      Repository(name, groupName, artifacts ++ springBootOverrides, s"Gradle wrapper version : $gradleVersion" , plugins, springBootData)
+      Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Gradle wrapper version : $gradleVersion" , plugins, springBootData))
     } else {
       // cannot process versions
-      null
+      None
     }
   }
 

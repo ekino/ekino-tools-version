@@ -9,7 +9,6 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.RefNotAdvertisedException
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
-import play.api.ConfigLoader.stringLoader
 import play.api.libs.json.{JsValue, Json}
 import play.api.{ConfigLoader, Configuration, Logger}
 
@@ -33,8 +32,8 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
       path.mkdirs()
     }
 
-    val eventualUnits: Seq[Future[Unit]] = fetchRepositoryNames().map(updateGitRepository)
-    val sequence = Future.sequence(eventualUnits)
+    val updatedRepositories: Seq[Future[Unit]] = fetchRepositoryNames().map(updateGitRepository)
+    val sequence = Future.sequence(updatedRepositories)
 
     // waiting for all the futures
     val timeout = configuration.get("timeout.git-update")(ConfigLoader.finiteDurationLoader)
@@ -181,7 +180,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
   private def fetchGithubRepositoryNames(user: String): Seq[String] = {
 
     // github api url
-    val url: String = s"https://api.github.com/users/$user/repos?access_token${getProperty("github.token")}&per_page=100"
+    val url: String = s"https://api.github.com/users/$user/repos?access_token=${getProperty("github.token")}&per_page=100"
 
     val connection = new URL(url).openConnection
 
@@ -203,7 +202,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
   }
 
-  private def getProperty(property: String) = configuration.get(property)
+  private def getProperty(property: String) = configuration.get[String](property)
 
   private def getPropertyList(property: String) = configuration.get[Seq[String]](property)
 

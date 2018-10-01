@@ -10,9 +10,9 @@ case class DisplayPlugin(pluginId: String, gradleVersion: String) {
 
   def getRepositories(plugin: String): Seq[String] = {
     versions
-      .getOrElse(plugin, null)
-      .toSeq
-      .sorted
+      .get(plugin)
+      .map(_.toSeq.sorted)
+      .getOrElse(Seq.empty)
   }
 
   def sortByVersion(s1: String, s2: String): Boolean = {

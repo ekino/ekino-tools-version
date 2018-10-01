@@ -39,8 +39,9 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private var centralDependencies = Map.empty[String, String]
   private var localPlugins = Map.empty[String, String]
   private var gradlePlugins = Map.empty[String, String]
-  private var springBootDefaultData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
-  private var springBootMasterData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
+
+  private val springBootDefaultData = springBootVersionService.computeSpringBootData(false)
+  private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
 
   /**
     * Fetch repositories data as repository list, versions, dependencies ...
@@ -56,8 +57,6 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     }
 
     clearCaches()
-
-    computeSpringBootData()
 
     computeRepositories(workspace)
 
@@ -93,15 +92,14 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     * Get a single repository to display.
     *
     * @param name the repository name i.e. gradle rootProject project
-    * @return the DisplayRepository or Null if not found
+    * @return an option of DisplayRepository
     */
-  def getRepository(name: String): DisplayRepository = {
+  def getRepository(name: String): Option[DisplayRepository] = {
     if (repositories.isEmpty) {
       fetchRepositories()
     }
     repositories.find(name == _.name)
       .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins, gradlePlugins))
-      .orNull
   }
 
   /**
@@ -174,13 +172,12 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private def computeRepositoriesForGroup(groupFolder: File): Seq[Repository] = {
     groupFolder.listFiles
       .filter(_.isDirectory)
-      .map(parseDirectory(_, groupFolder.getName))
-      .filter(_ != null)
+      .flatMap(parseDirectory(_, groupFolder.getName))
       .filter(repo => repo.versions.nonEmpty || repo.plugins.nonEmpty)
 
   }
 
-  private def parseDirectory(projectFolder: File, groupName: String): Repository = {
+  private def parseDirectory(projectFolder: File, groupName: String): Option[Repository] = {
     if (GradleRepositoryParser.getBuildFile(projectFolder).exists()) {
       Logger.debug(s"gradle project: $projectFolder")
       GradleRepositoryParser.buildRepository(projectFolder, groupName, springBootDefaultData, springBootMasterData)
@@ -190,7 +187,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     } else if (SBTRepositoryParser.getBuildFile(projectFolder).exists()) {
       Logger.debug(s"sbt project: $projectFolder")
       SBTRepositoryParser.buildRepository(projectFolder, groupName)
-    } else null
+    } else None
   }
 
   /**
@@ -288,11 +285,6 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
 
   private def isHigherVersion(existingVersion: Option[String], newVersion: String): Boolean = {
     existingVersion.isEmpty || VersionComparator.versionCompare(existingVersion.get, newVersion) < 0
-  }
-
-  private def computeSpringBootData(): Unit = {
-    springBootDefaultData = springBootVersionService.computeSpringBootData(false)
-    springBootMasterData = springBootVersionService.computeSpringBootData(true)
   }
 
 }

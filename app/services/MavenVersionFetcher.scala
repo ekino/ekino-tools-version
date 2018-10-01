@@ -1,5 +1,6 @@
 package services
 
+import java.io.FileNotFoundException
 import java.net.URL
 
 import javax.inject.Singleton
@@ -9,6 +10,7 @@ import play.api.Logger
 
 import scala.concurrent.Future
 import scala.io.Source
+import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 /**
@@ -22,12 +24,9 @@ class MavenVersionFetcher {
   // download maven-metadata to get the latest repository
   def getLatestVersion(name: String, mavenUrl: String, mavenUser: String, mavenPassword: String): Future[(String, String)] = Future {
 
-    var uri: String = null
     try {
-      pattern.findAllIn(name).matchData foreach {
-        matchData => {
-          uri = matchData.group(1).replace('.', '/') + "/" + matchData.group(2)
-        }
+      val uri = name match {
+        case pattern(group, artefact) => group.replace('.', '/') + "/" + artefact
       }
 
       // maven meta data
@@ -48,11 +47,11 @@ class MavenVersionFetcher {
       (name, version.text)
 
     } catch {
-      case _: java.io.FileNotFoundException => (name, "")
-      case e: Exception => {
+      case _: FileNotFoundException => (name, "")
+      case NonFatal(e) =>
         Logger.error(s"Unexpected exception for $name", e)
         (name, "")
-      }
+
     }
 
   }
