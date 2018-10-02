@@ -67,7 +67,7 @@ Test the application on url http://localhost:9000/
 ```bash
 $ ./gradlew clean dist
 $ docker build . -t ekino-tools-version
-$ docker run --env-file credencials-docker --rm -p "8080:8080" -v "/tmp/versions:/tmp/versions" ekino-tools-version
+$ docker run --env-file credentials-docker --rm -p "8080:8080" -v "/tmp/versions:/tmp/versions" ekino-tools-version
 ```
 Test the application on url http://localhost:8080/
 
