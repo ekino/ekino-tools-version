@@ -9,6 +9,6 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
   */
 object CustomExecutionContext {
 
-  implicit val executionContextExecutor: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
+  implicit val executionContextExecutor: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(20))
 
 }
