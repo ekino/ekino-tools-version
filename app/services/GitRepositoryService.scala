@@ -32,7 +32,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
       path.mkdirs()
     }
 
-    val updatedRepositories: Seq[Future[Unit]] = fetchRepositoryNames().map(updateGitRepository)
+    val updatedRepositories: Seq[Future[Unit]] = fetchRepositoryUrls().map(updateGitRepository)
     val sequence = Future.sequence(updatedRepositories)
 
     // waiting for all the futures
@@ -114,37 +114,37 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
   }
 
   /**
-    * Fetch the repository names using gitlab api.
+    * Fetch the repository urls using gitlab or github api.
     *
-    * @return a sequence of all the repository names
+    * @return a sequence of all the repository urls
     */
-  private def fetchRepositoryNames(): Seq[String] = {
+  private def fetchRepositoryUrls(): Seq[String] = {
     Logger.info("Fetching repositories from gitlab")
 
     val gitlabGroupIds = getProperty("gitlab.group-ids")
 
-    val gitlabNames = gitlabGroupIds
+    val gitlabUrls = gitlabGroupIds
       .split(',')
       .filter(_.nonEmpty)
-      .flatMap(groupId => fetchGitlabRepositoryNames(groupId))
+      .flatMap(groupId => fetchGitlabRepositoryUrls(groupId))
 
     val githubUsers = getProperty("github.users")
 
-    val githubNames = githubUsers
+    val githubUrls = githubUsers
       .split(',')
       .filter(_.nonEmpty)
-      .flatMap(groupId => fetchGithubRepositoryNames(groupId))
+      .flatMap(groupId => fetchGithubRepositoryUrls(groupId))
 
-    gitlabNames ++ githubNames
+    gitlabUrls ++ githubUrls
   }
 
   /**
-    * Fetch the gitlab repository names for the given groupId using gitlab api.
+    * Fetch the gitlab repository urls for the given groupId using gitlab api.
     *
     * @param groupId The gitlab group id
-    * @return a sequence of all the repository names
+    * @return a sequence of all the repository urls
     */
-  private def fetchGitlabRepositoryNames(groupId: String): Seq[String] = {
+  private def fetchGitlabRepositoryUrls(groupId: String): Seq[String] = {
 
     // gitlab api url
     val url: String = s"${getProperty("gitlab.url")}/api/v4/groups/$groupId/projects?per_page=1000"
@@ -172,12 +172,12 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
   }
 
   /**
-    * Fetch the repository names for the given user using github api.
+    * Fetch the repository urls for the given user using github api.
     *
     * @param user The github user name
-    * @return a sequence of all the repository names
+    * @return a sequence of all the repository urls
     */
-  private def fetchGithubRepositoryNames(user: String): Seq[String] = {
+  private def fetchGithubRepositoryUrls(user: String): Seq[String] = {
 
     // github api url
     val url: String = s"https://api.github.com/users/$user/repos?access_token=${getProperty("github.token")}&per_page=100"
