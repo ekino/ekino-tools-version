@@ -15,7 +15,7 @@ import play.api.{ConfigLoader, Configuration, Logger}
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
-
+import GitRepositoryService._
 
 @Singleton
 class GitRepositoryService @Inject()(configuration: Configuration) {
@@ -37,7 +37,11 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
     // waiting for all the futures
     val timeout = configuration.get("timeout.git-update")(ConfigLoader.finiteDurationLoader)
-    Await.result(sequence, timeout)
+    try {
+      Await.result(sequence, timeout)
+    } catch {
+      case e: Exception => Logger.info("error", e)
+    }
   }
 
   /**
@@ -123,31 +127,38 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
     val gitlabGroupIds = getProperty("gitlab.group-ids")
 
+    val gitlabIgnored = getPropertyList("gitlab.ignored-repositories")
+    Logger.info(s"gitlab ignored repositories: $gitlabIgnored")
+
     val gitlabUrls = gitlabGroupIds
       .split(',')
       .filter(_.nonEmpty)
-      .flatMap(groupId => fetchGitlabRepositoryUrls(groupId))
+      .flatMap(groupId => fetchGitlabRepositoryUrls(groupId, gitlabIgnored))
 
     val githubUsers = getProperty("github.users")
+
+    val githubIgnored = getPropertyList("github.ignored-repositories")
+    Logger.info(s"github ignored repositories: $githubIgnored")
 
     val githubUrls = githubUsers
       .split(',')
       .filter(_.nonEmpty)
-      .flatMap(groupId => fetchGithubRepositoryUrls(groupId))
+      .flatMap(user => fetchGithubRepositoryUrls(user, githubIgnored))
 
     gitlabUrls ++ githubUrls
   }
 
   /**
-    * Fetch the gitlab repository urls for the given groupId using gitlab api.
+    * Fetch the gitlab repository urls recursively for the given groupId using gitlab api.
     *
-    * @param groupId The gitlab group id
+    * @param groupId      the gitlab group id
+    * @param ignored      the ignored repositories
+    * @param page         first page to fetch (default 1)
+    * @param accumulator  already retreived repository urls
     * @return a sequence of all the repository urls
     */
-  private def fetchGitlabRepositoryUrls(groupId: String): Seq[String] = {
-
-    // gitlab api url
-    val url: String = s"${getProperty("gitlab.url")}/api/v4/groups/$groupId/projects?per_page=1000"
+  private def fetchGitlabRepositoryUrls(groupId: String, ignored: Seq[String], page: Int = 1, accumulator: Seq[String] = Seq.empty): Seq[String] = {
+    val url: String = s"${getProperty("gitlab.url")}/api/v4/groups/$groupId/projects?per_page=100&page=$page"
 
     val connection = new URL(url).openConnection
     connection.setRequestProperty("PRIVATE-TOKEN", getProperty("gitlab.token"))
@@ -156,31 +167,35 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
     // getting the project list of gitlab group
     val repositories = Json.parse(result)
-    val ignored = getPropertyList("gitlab.ignored-repositories")
 
-    Logger.info(s"ignored repositories: $ignored")
-
-    val names = repositories.as[Seq[JsValue]]
+    val pageUrls = repositories.as[Seq[JsValue]]
       .map(repository => (repository \ "path_with_namespace").as[String])
       .filter(name => !name.contains(ignored))
       .map(getProperty("gitlab.url") + "/" + _)
 
-    Logger.info(s"gitlab repositories: $names")
+    val urls = accumulator ++ pageUrls
 
-    names
-
+    if (connection.getHeaderField(gitlabNextPageHeader).isEmpty) {
+      Logger.info(s"gitlab repositories: $urls")
+      urls
+    } else {
+      fetchGitlabRepositoryUrls(groupId, ignored, page + 1, urls)
+    }
   }
 
   /**
-    * Fetch the repository urls for the given user using github api.
+    * Fetch the repository urls recursively for the given user using github api.
     *
-    * @param user The github user name
+    * @param user         the github user name
+    * @param ignored      the ignored repositories
+    * @param page         first page to fetch (default 1)
+    * @param accumulator  already retreived repository urls
     * @return a sequence of all the repository urls
     */
-  private def fetchGithubRepositoryUrls(user: String): Seq[String] = {
+  private def fetchGithubRepositoryUrls(user: String, ignored: Seq[String], page: Int = 1, accumulator: Seq[String] = Seq.empty): Seq[String] = {
 
     // github api url
-    val url: String = s"https://api.github.com/users/$user/repos?access_token=${getProperty("github.token")}&per_page=100"
+    val url: String = s"https://api.github.com/users/$user/repos?access_token=${getProperty("github.token")}&per_page=100&page=$page"
 
     val connection = new URL(url).openConnection
 
@@ -188,18 +203,23 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
     // getting the project list of github user
     val repositories = Json.parse(result)
-    val ignored = getPropertyList("github.ignored-repositories")
 
-    Logger.info(s"ignored repositories: $ignored")
-
-    val names = repositories.as[Seq[JsValue]]
+    val pageUrls = repositories.as[Seq[JsValue]]
       .map(repository => (repository \ "html_url").as[String])
-      .filter(name => !ignored.contains(name))
+      .filter(name => !name.contains(ignored))
 
-    Logger.info(s"github repositories: $names")
+    val urls = accumulator ++ pageUrls
 
-    names
+    val linkHeader = connection.getHeaderField(githubLinkHeader)
 
+    Logger.info(s"head : $linkHeader")
+
+    if (linkHeader == null || linkHeader.contains(githubLastPageLink)) {
+      Logger.info(s"github repositories: $urls")
+      urls
+    } else {
+      fetchGithubRepositoryUrls(user, ignored, page + 1, urls)
+    }
   }
 
   private def getProperty(property: String) = configuration.get[String](property)
@@ -213,4 +233,10 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
       new UsernamePasswordCredentialsProvider(getProperty("github.user"), getProperty("gitlab.token"))
     }
   }
+}
+
+object GitRepositoryService {
+  private val gitlabNextPageHeader = "X-Next-Page"
+  private val githubLinkHeader = "Link"
+  private val githubLastPageLink = "rel=\"first\""
 }
