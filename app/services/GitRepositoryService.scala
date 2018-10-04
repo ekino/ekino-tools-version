@@ -16,6 +16,7 @@ import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
 import GitRepositoryService._
+import scala.util.Try
 
 @Singleton
 class GitRepositoryService @Inject()(configuration: Configuration) {
@@ -37,11 +38,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
     // waiting for all the futures
     val timeout = configuration.get("timeout.git-update")(ConfigLoader.finiteDurationLoader)
-    try {
-      Await.result(sequence, timeout)
-    } catch {
-      case e: Exception => Logger.info("error", e)
-    }
+    Await.result(sequence, timeout)
   }
 
   /**
@@ -57,7 +54,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
     }
   }
 
-  private def updateGitRepository(repositoryUrl: String, repositoryName: String): Unit = {
+  private def updateGitRepository(repositoryUrl: String, repositoryName: String): Unit = Try {
 
     val repositoryDirectory = new File(getProperty("project.repositories.path"), repositoryName)
 
@@ -212,8 +209,6 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 
     val linkHeader = connection.getHeaderField(githubLinkHeader)
 
-    Logger.info(s"head : $linkHeader")
-
     if (linkHeader == null || linkHeader.contains(githubLastPageLink)) {
       Logger.info(s"github repositories: $urls")
       urls
@@ -222,7 +217,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
     }
   }
 
-  private def getProperty(property: String) = configuration.get[String](property)
+  private def getProperty(property: String): String = configuration.getOptional[String](property).getOrElse("")
 
   private def getPropertyList(property: String) = configuration.get[Seq[String]](property)
 
