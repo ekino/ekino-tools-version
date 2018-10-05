@@ -21,7 +21,7 @@ import scala.util.Try
 @Singleton
 class GitRepositoryService @Inject()(configuration: Configuration) {
 
-  private val projectUrl = """https?:\/\/[^ \/]+\/(.*)""".r
+  private val projectUrl = "https?://[^ /]+/(.*)".r
 
   /**
     * Update all the repositories.
