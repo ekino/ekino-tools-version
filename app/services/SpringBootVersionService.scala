@@ -21,7 +21,7 @@ class SpringBootVersionService @Inject()(configuration: Configuration) {
 
   def computeSpringBootData(master: Boolean): SpringBootData = {
     if (master) {
-      getData(configuration.get("github.springboot.master.url"))
+      getData(configuration.get("github.springboot.master-url"))
     } else {
       getData(configuration.get("github.springboot.url"))
     }

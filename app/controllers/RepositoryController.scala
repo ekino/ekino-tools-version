@@ -11,7 +11,9 @@ import services.VersionService
 class RepositoryController @Inject()(versionService: VersionService) extends InjectedController {
 
   def index(name: String) = Action {
-    val repository = versionService.getRepository(name)
-    Ok(views.html.repository(repository))
+    versionService.getRepository(name) match {
+      case Some(repository) => Ok(views.html.repository(repository))
+      case None             => NotFound
+    }
   }
 }

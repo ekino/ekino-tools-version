@@ -10,9 +10,9 @@ case class DisplayDependency(name: String, centralVersion: String) {
 
   def getRepositories(dependency: String): Seq[String] = {
     versions
-      .getOrElse(dependency, null)
-      .toSeq
-      .sorted
+      .get(dependency)
+      .map(_.toSeq.sorted)
+      .getOrElse(Seq.empty)
   }
 
   def sortByVersion(s1: String, s2: String): Boolean = {

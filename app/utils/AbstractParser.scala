@@ -32,10 +32,10 @@ class AbstractParser {
         .toSeq: _*
       )
     } catch {
-      case _: IOException => {
+      case _: IOException =>
         Logger.info(s"Cannot find ${file.getName}")
         Map.empty[String, String]
-      }
+
     }
   }
 

@@ -3,13 +3,12 @@ package services
 import java.io.File
 
 import javax.inject.{Inject, Singleton}
+import model.CustomExecutionContext.executionContextExecutor
 import model._
 import play.api.ConfigLoader.stringLoader
-import play.api.{Configuration, Logger}
+import play.api.{ConfigLoader, Configuration, Logger}
 import utils.{GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser, VersionComparator}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 /**
@@ -20,18 +19,18 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
                                gitRepositoryService: GitRepositoryService, springBootVersionService: SpringBootVersionService) {
 
   private val filePath = configuration.get("project.repositories.path")
-  private val localMavenUrl = configuration.get("local.maven.url")
-  private val localMavenUser = configuration.getOptional("local.maven.user").getOrElse("")
-  private val localMavenPassword = configuration.getOptional("local.maven.password").getOrElse("")
-  private val localPluginsMavenUrl = configuration.get("local-plugins.maven.url")
-  private val localPluginsMavenUser = configuration.getOptional("local-plugins.maven.user").getOrElse("")
-  private val localPluginsMavenPassword = configuration.getOptional("local-plugins.maven.password").getOrElse("")
-  private val centralMavenUrl = configuration.get("central.maven.url")
-  private val centralMavenUser = configuration.getOptional("central.maven.user").getOrElse("")
-  private val centralMavenPassword = configuration.getOptional("central.maven.password").getOrElse("")
-  private val gradlePluginsMavenUrl = configuration.get("gradle-plugins.maven.url")
-  private val gradlePluginsMavenUser = configuration.getOptional("gradle-plugins.maven.user").getOrElse("")
-  private val gradlePluginsMavenPassword = configuration.getOptional("gradle-plugins.maven.password").getOrElse("")
+  private val localMavenUrl = configuration.get("maven.local.url")
+  private val localMavenUser = configuration.getOptional("maven.local.user").getOrElse("")
+  private val localMavenPassword = configuration.getOptional("maven.local.password").getOrElse("")
+  private val localPluginsMavenUrl = configuration.get("maven.local-plugins.url")
+  private val localPluginsMavenUser = configuration.getOptional("maven.local-plugins.user").getOrElse("")
+  private val localPluginsMavenPassword = configuration.getOptional("maven.local-plugins.password").getOrElse("")
+  private val centralMavenUrl = configuration.get("maven.central.url")
+  private val centralMavenUser = configuration.getOptional("maven.central.user").getOrElse("")
+  private val centralMavenPassword = configuration.getOptional("maven.central.password").getOrElse("")
+  private val gradlePluginsMavenUrl = configuration.get("maven.gradle-plugins.url")
+  private val gradlePluginsMavenUser = configuration.getOptional("maven.gradle-plugins.user").getOrElse("")
+  private val gradlePluginsMavenPassword = configuration.getOptional("maven.gradle-plugins.password").getOrElse("")
 
   private var repositories = Seq.empty[Repository]
   private var dependencies = Seq.empty[DisplayDependency]
@@ -40,8 +39,9 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private var centralDependencies = Map.empty[String, String]
   private var localPlugins = Map.empty[String, String]
   private var gradlePlugins = Map.empty[String, String]
-  private var springBootDefaultData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
-  private var springBootMasterData = SpringBootData(Map.empty[String, String], Map.empty[String, String])
+
+  private val springBootDefaultData = springBootVersionService.computeSpringBootData(false)
+  private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
 
   /**
     * Fetch repositories data as repository list, versions, dependencies ...
@@ -57,8 +57,6 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     }
 
     clearCaches()
-
-    computeSpringBootData()
 
     computeRepositories(workspace)
 
@@ -94,15 +92,14 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     * Get a single repository to display.
     *
     * @param name the repository name i.e. gradle rootProject project
-    * @return the DisplayRepository or Null if not found
+    * @return an option of DisplayRepository
     */
-  def getRepository(name: String): DisplayRepository = {
+  def getRepository(name: String): Option[DisplayRepository] = {
     if (repositories.isEmpty) {
       fetchRepositories()
     }
     repositories.find(name == _.name)
       .map(DisplayRepository(_, localDependencies, centralDependencies, localPlugins, gradlePlugins))
-      .orNull
   }
 
   /**
@@ -175,13 +172,12 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private def computeRepositoriesForGroup(groupFolder: File): Seq[Repository] = {
     groupFolder.listFiles
       .filter(_.isDirectory)
-      .map(parseDirectory(_, groupFolder.getName))
-      .filter(_ != null)
+      .flatMap(parseDirectory(_, groupFolder.getName))
       .filter(repo => repo.versions.nonEmpty || repo.plugins.nonEmpty)
 
   }
 
-  private def parseDirectory(projectFolder: File, groupName: String): Repository = {
+  private def parseDirectory(projectFolder: File, groupName: String): Option[Repository] = {
     if (GradleRepositoryParser.getBuildFile(projectFolder).exists()) {
       Logger.debug(s"gradle project: $projectFolder")
       GradleRepositoryParser.buildRepository(projectFolder, groupName, springBootDefaultData, springBootMasterData)
@@ -191,7 +187,7 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     } else if (SBTRepositoryParser.getBuildFile(projectFolder).exists()) {
       Logger.debug(s"sbt project: $projectFolder")
       SBTRepositoryParser.buildRepository(projectFolder, groupName)
-    } else null
+    } else None
   }
 
   /**
@@ -217,7 +213,8 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     val sequence = Future.sequence(gradlePluginFutures.values ++ localPluginFutures.values)
 
     // waiting for all the futures
-    val list = Await.result(sequence, Duration.Inf)
+    val timeout = configuration.get("timeout.compute-plugins")(ConfigLoader.finiteDurationLoader)
+    val list = Await.result(sequence, timeout)
 
     list.foreach { element =>
       val pluginId = element._1.split(':')(0)
@@ -252,7 +249,8 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     val sequence = Future.sequence(centralDependencyFutures.values ++ localDependencyFutures.values)
 
     // waiting for all the futures
-    val list = Await.result(sequence, Duration.Inf)
+    val timeout = configuration.get("timeout.compute-versions")(ConfigLoader.finiteDurationLoader)
+    val list = Await.result(sequence, timeout)
 
     list.foreach { element =>
       if (isHigherVersion(centralDependencies.get(element._1), element._2)) {
@@ -287,11 +285,6 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
 
   private def isHigherVersion(existingVersion: Option[String], newVersion: String): Boolean = {
     existingVersion.isEmpty || VersionComparator.versionCompare(existingVersion.get, newVersion) < 0
-  }
-
-  private def computeSpringBootData(): Unit = {
-    springBootDefaultData = springBootVersionService.computeSpringBootData(false)
-    springBootMasterData = springBootVersionService.computeSpringBootData(true)
   }
 
 }

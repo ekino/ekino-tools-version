@@ -30,7 +30,7 @@ case class DisplayRepository(repository: Repository,
   }
 
   def springBootVersion(dependency: String): String = {
-    if (repository.springBootData != null && repository.springBootData.artefacts.contains(dependency)
+    if (repository.springBootData.artefacts.contains(dependency)
       && repository.plugins.contains("org.springframework.boot")) {
       val compare = VersionComparator.versionCompare(getDependencyVersion(dependency), repository.springBootData.properties(repository.springBootData.artefacts(dependency)))
       if (compare == 0) {
