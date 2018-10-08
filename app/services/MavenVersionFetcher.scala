@@ -26,7 +26,7 @@ class MavenVersionFetcher {
 
     try {
       val uri = name match {
-        case pattern(group, artefact) => group.replace('.', '/') + "/" + artefact
+        case pattern(group, artefact) => s"${group.replace('.', '/')}/$artefact"
       }
 
       // maven meta data

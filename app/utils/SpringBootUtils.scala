@@ -5,8 +5,7 @@ import model.SpringBootData
 import scala.collection.immutable.ListMap
 
 /**
-  * @author Philippe Agra
-  * @since 10/08/2018
+  * Utility object with springboot methods.
   */
 object SpringBootUtils {
 
