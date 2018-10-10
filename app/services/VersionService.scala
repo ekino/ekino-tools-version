@@ -24,6 +24,74 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   private var data: RepositoryData = RepositoryData.noData
 
   /**
+    * List all the projects to display.
+    *
+    * @return a list of Project
+    */
+  def listProjects(): Seq[Project] = {
+    data.repositories
+      .map(DisplayRepository(_, data.localDependencies, data.centralDependencies, data.localPlugins, data.gradlePlugins))
+      .groupBy(_.project())
+      .map(e => Project(e._1, e._2.sortBy(_.name)))
+      .toSeq
+      .sortWith((a, b) => a.repositories.lengthCompare(b.repositories.size) > 0)
+  }
+
+  /**
+    * Get a single repository to display.
+    *
+    * @param name the repository name i.e. gradle rootProject project
+    * @return an option of DisplayRepository
+    */
+  def getRepository(name: String): Option[DisplayRepository] = {
+    data.repositories.find(name == _.name)
+      .map(DisplayRepository(_, data.localDependencies, data.centralDependencies, data.localPlugins, data.gradlePlugins))
+  }
+
+  /**
+    * Get a single dependency to display.
+    *
+    * @param name the dependency name i.e. package:artifactName
+    * @return the DisplayDependency or a new one if not found
+    */
+  def getDependency(name: String): DisplayDependency = {
+    val option: Option[DisplayDependency] = data.dependencies.find(_.name == name)
+    if (option.isEmpty) {
+      val dependency = DisplayDependency(name, data.centralDependencies.getOrElse(name, ""))
+      data = data.copy(dependencies = data.dependencies :+ dependency)
+      dependency
+    } else option.get
+  }
+
+  /**
+    * Get a single plugin to display.
+    *
+    * @param pluginId the plugin id ex. com.ekino.base
+    * @return the DisplayPlugin or a new one if not found
+    */
+  def getPlugin(pluginId: String): DisplayPlugin = {
+    val option: Option[DisplayPlugin] = data.plugins.find(_.pluginId == pluginId)
+    if (option.isEmpty) {
+      val plugin = DisplayPlugin(pluginId, data.localPlugins.getOrElse(pluginId, ""))
+      data = data.copy(plugins = data.plugins :+ plugin)
+      plugin
+    } else option.get
+  }
+
+  def allDependencies(): Seq[DisplayDependency] = data.dependencies.sortBy(_.name)
+
+  /**
+    * Initialize the data if needed.
+    */
+  def initData(): Unit = {
+    if (data.repositories.isEmpty) {
+      val start = System.currentTimeMillis
+      fetchRepositories()
+      Logger.info(s"data has been initialized in ${System.currentTimeMillis - start} ms")
+    }
+  }
+
+  /**
     * Fetch repositories data as repository list, versions, dependencies ...
     */
   def fetchRepositories() {
@@ -47,75 +115,6 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
     computeDependencies()
 
   }
-
-  /**
-    * List all the projects to display.
-    *
-    * @return a list of Project
-    */
-  def listProjects(): Seq[Project] = {
-    if (data.repositories.isEmpty) {
-      fetchRepositories()
-    }
-    data.repositories
-      .map(DisplayRepository(_, data.localDependencies, data.centralDependencies, data.localPlugins, data.gradlePlugins))
-      .groupBy(_.project())
-      .map(e => Project(e._1, e._2.sortBy(_.name)))
-      .toSeq
-      .sortWith((a, b) => a.repositories.lengthCompare(b.repositories.size) > 0)
-  }
-
-  /**
-    * Get a single repository to display.
-    *
-    * @param name the repository name i.e. gradle rootProject project
-    * @return an option of DisplayRepository
-    */
-  def getRepository(name: String): Option[DisplayRepository] = {
-    if (data.repositories.isEmpty) {
-      fetchRepositories()
-    }
-    data.repositories.find(name == _.name)
-      .map(DisplayRepository(_, data.localDependencies, data.centralDependencies, data.localPlugins, data.gradlePlugins))
-  }
-
-  /**
-    * Get a single dependency to display.
-    *
-    * @param name the dependency name i.e. package:artifactName
-    * @return the DisplayDependency or a new one if not found
-    */
-  def getDependency(name: String): DisplayDependency = {
-    if (data.repositories.isEmpty) {
-      fetchRepositories()
-    }
-    val option: Option[DisplayDependency] = data.dependencies.find(_.name == name)
-    if (option.isEmpty) {
-      val dependency = DisplayDependency(name, data.centralDependencies.getOrElse(name, ""))
-      data = data.copy(dependencies = data.dependencies :+ dependency)
-      dependency
-    } else option.get
-  }
-
-  /**
-    * Get a single plugin to display.
-    *
-    * @param pluginId the plugin id ex. com.ekino.base
-    * @return the DisplayPlugin or a new one if not found
-    */
-  def getPlugin(pluginId: String): DisplayPlugin = {
-    if (data.repositories.isEmpty) {
-      fetchRepositories()
-    }
-    val option: Option[DisplayPlugin] = data.plugins.find(_.pluginId == pluginId)
-    if (option.isEmpty) {
-      val plugin = DisplayPlugin(pluginId, data.localPlugins.getOrElse(pluginId, ""))
-      data = data.copy(plugins = data.plugins :+ plugin)
-      plugin
-    } else option.get
-  }
-
-  def allDependencies(): Seq[DisplayDependency] = data.dependencies.sortBy(_.name)
 
   /**
     * Clear all the internal cache objects

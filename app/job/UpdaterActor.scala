@@ -13,12 +13,16 @@ import services.{GitRepositoryService, VersionService}
 class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryService: GitRepositoryService) extends Actor {
 
   def receive: PartialFunction[Any, Unit] = {
+    case InitMessage =>
+      versionService.initData()
+      sender() ! SuccessMessage
     case UpdateMessage =>
+      update()
+    case UpdateWithResponseMessage =>
       update()
       sender() ! SuccessMessage
     case message  =>
       Logger.error(s"Cannot process message: $message")
-      sender() ! ErrorMessage
   }
 
   def update(): Unit = {
@@ -29,6 +33,6 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
     Logger.info("Update repositories cache")
     versionService.fetchRepositories()
 
-    Logger.info("took " + (System.currentTimeMillis - start) + " ms to get data")
+    Logger.info("took " + (System.currentTimeMillis - start) + " ms to create cache")
   }
 }
