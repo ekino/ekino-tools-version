@@ -16,7 +16,6 @@ class DependencyController @Inject()(versionService: VersionService) extends Inj
   }
 
   def dependencies() = Action {
-    versionService.listProjects()
     val dependencies = versionService.allDependencies()
     Ok(views.html.dependencies(dependencies))
   }

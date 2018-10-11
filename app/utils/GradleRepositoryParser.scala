@@ -48,14 +48,13 @@ object GradleRepositoryParser extends AbstractParser {
 
     if (buildFile.exists && propertiesFile.exists) {
 
-
       val name = extractFromFile(settingsFile, projectNameRegex, extractValue).getOrElse("value", file.getName)
       Logger.info(s"name $name")
       val extractedArtifacts = extractFromFile(buildFile, artifactRegex, extractArtifacts)
-      Logger.info(s"artifacts $extractedArtifacts")
+      Logger.debug(s"artifacts $extractedArtifacts")
       val properties = extractFromFile(propertiesFile, propertyRegex, extractProperties)
 
-      Logger.info(s"properties $properties")
+      Logger.debug(s"properties $properties")
 
       val gradleVersion = extractFromFile(gradleVersionFile, gradleVersionRegex, extractValue).getOrElse("value", "")
       val plugins = extractFromFile(buildFile, pluginRegex, extractProperties)

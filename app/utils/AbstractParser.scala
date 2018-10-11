@@ -33,7 +33,7 @@ class AbstractParser {
       )
     } catch {
       case _: IOException =>
-        Logger.info(s"Cannot find ${file.getName}")
+        Logger.debug(s"Cannot find ${file.getName}")
         Map.empty[String, String]
 
     }

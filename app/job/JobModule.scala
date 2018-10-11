@@ -9,7 +9,7 @@ import play.api.libs.concurrent.AkkaGuiceSupport
 class JobModule extends AbstractModule with AkkaGuiceSupport {
 
   def configure(): Unit = {
-    bindActor[SchedulerActor]("scheduler-actor")
+    bindActor[UpdaterActor]("updater-actor")
     bind(classOf[Scheduler]).asEagerSingleton()
   }
 }

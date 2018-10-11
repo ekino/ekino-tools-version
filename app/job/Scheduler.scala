@@ -6,15 +6,14 @@ import model.CustomExecutionContext.executionContextExecutor
 import play.api.ConfigLoader.finiteDurationLoader
 import play.api.Configuration
 
-import scala.language.postfixOps
-
 /**
   * Akka Actor Scheduler.
   */
-class Scheduler @Inject()(val system: ActorSystem, @Named("scheduler-actor") val schedulerActor: ActorRef, configuration: Configuration) {
+class Scheduler @Inject()(val system: ActorSystem, @Named("updater-actor") val updaterActor: ActorRef, configuration: Configuration) {
+
   system.scheduler.schedule(
     configuration.get("scheduler.initial-delay"),
     configuration.get("scheduler.interval"),
-    schedulerActor,
-    "update")
+    updaterActor,
+    UpdateMessage)
 }
