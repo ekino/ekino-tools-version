@@ -12,7 +12,7 @@ import scala.util.matching.Regex.MatchData
 /**
   * Abstract class for file parsers.
   */
-class AbstractParser {
+abstract class AbstractParser {
 
   // transforms a regex match data into a map entry
   type ExtractGroups = MatchData => (String, String)
@@ -20,6 +20,11 @@ class AbstractParser {
   val extractProperties: ExtractGroups = matchData => matchData.group(1) -> matchData.group(2)
   val extractValue: ExtractGroups = matchData => "value" -> matchData.group(1)
   val extractArtifacts: ExtractGroups = matchData => (matchData.group(1) + ":" + matchData.group(2)).trim -> matchData.group(3)
+
+  def getBuildFile(repositoryPath: File): File
+
+  def canProcess(repository: File): Boolean =
+    getBuildFile(repository).exists()
 
   // read a file and extract lines matching a pattern
   protected def extractFromFile(file: File, regex: Regex, extract: ExtractGroups): Map[String, String] = {

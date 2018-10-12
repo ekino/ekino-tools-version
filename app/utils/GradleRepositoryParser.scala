@@ -68,7 +68,7 @@ object GradleRepositoryParser extends AbstractParser {
     }
   }
 
-  def getBuildFile(repositoryPath: File): File = {
+  override def getBuildFile(repositoryPath: File): File = {
     var buildFile = new File(repositoryPath, buildFileName)
     if (!buildFile.exists()) {
       buildFile = new File(repositoryPath, buildKotlinFileName)
