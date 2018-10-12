@@ -2,22 +2,21 @@ package services
 
 import java.io.FileNotFoundException
 import java.net.URL
+import java.util.Base64
 
-import javax.inject.Singleton
 import model.CustomExecutionContext.executionContextExecutor
-import org.apache.commons.codec.binary.Base64
 import play.api.Logger
 
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
+import scala.xml.XML
 
 /**
   * Download metadata from a maven url and return a Future of the last release.
   */
-@Singleton
-class MavenVersionFetcher {
+object MavenVersionFetcher {
 
   val pattern: Regex = "([^:]+):(.+)".r
 
@@ -40,7 +39,7 @@ class MavenVersionFetcher {
       }
 
       val html = Source.fromInputStream(connection.getInputStream)
-      val xmlFromString = scala.xml.XML.loadString(html.mkString)
+      val xmlFromString = XML.loadString(html.mkString)
       val version = xmlFromString \\ "release" // XPATH to select release node
       Logger.info("Resolved " + url + ":" + version.text)
 
@@ -56,6 +55,12 @@ class MavenVersionFetcher {
 
   }
 
+  def isMavenVersion(name: String): Boolean =
+    name match {
+      case pattern(_, _) => true
+      case _             => false
+    }
+
   object HttpBasicAuth {
     val BASIC = "Basic"
     val AUTHORIZATION = "Authorization"
@@ -64,7 +69,7 @@ class MavenVersionFetcher {
       BASIC + " " + encodeCredentials(username, password)
 
     def encodeCredentials(username: String, password: String): String =
-      new String(Base64.encodeBase64String((username + ":" + password).getBytes))
+      new String(Base64.getEncoder.encode((username + ":" + password).getBytes))
   }
 
 }

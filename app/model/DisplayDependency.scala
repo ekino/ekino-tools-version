@@ -42,5 +42,5 @@ case class DisplayDependency(name: String, centralVersion: String) {
     *
     * @return the count of the dependency usages
     */
-  def numberOfUses(): Int = versions.map(_._2.size).sum
+  def numberOfUses(): Int = versions.values.flatten.size
 }

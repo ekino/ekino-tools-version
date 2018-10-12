@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 import model.CustomExecutionContext.executionContextExecutor
 import model._
 import play.api.{ConfigLoader, Configuration, Logger}
-import utils.{GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser, VersionComparator}
+import utils._
 
 import scala.concurrent.{Await, Future}
 
@@ -14,8 +14,10 @@ import scala.concurrent.{Await, Future}
   * Main versions service.
   */
 @Singleton
-class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersionFetcher,
-                               gitRepositoryService: GitRepositoryService, springBootVersionService: SpringBootVersionService) {
+class VersionService @Inject()(
+  configuration: Configuration,
+  gitRepositoryService: GitRepositoryService,
+  springBootVersionService: SpringBootVersionService) {
 
   private val config = Config(configuration)
   private val springBootDefaultData = springBootVersionService.computeSpringBootData(false)
@@ -148,16 +150,18 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
   }
 
   private def parseDirectory(projectFolder: File, groupName: String): Option[Repository] = {
-    if (GradleRepositoryParser.getBuildFile(projectFolder).exists()) {
-      Logger.debug(s"gradle project: $projectFolder")
-      GradleRepositoryParser.buildRepository(projectFolder, groupName, springBootDefaultData, springBootMasterData)
-    } else if (MavenRepositoryParser.getBuildFile(projectFolder).exists()) {
-      Logger.debug(s"maven project: $projectFolder")
-      MavenRepositoryParser.buildRepository(projectFolder, groupName, springBootDefaultData, springBootMasterData)
-    } else if (SBTRepositoryParser.getBuildFile(projectFolder).exists()) {
-      Logger.debug(s"sbt project: $projectFolder")
-      SBTRepositoryParser.buildRepository(projectFolder, groupName)
-    } else None
+    projectFolder match {
+      case npm if NPMRepositoryParser.canProcess(npm) =>
+        NPMRepositoryParser.buildRepository(npm, groupName)
+      case gradle if GradleRepositoryParser.canProcess(gradle) =>
+        GradleRepositoryParser.buildRepository(gradle, groupName, springBootDefaultData, springBootMasterData)
+      case mvn if MavenRepositoryParser.canProcess(mvn) =>
+        MavenRepositoryParser.buildRepository(mvn, groupName, springBootDefaultData, springBootMasterData)
+      case sbt if SBTRepositoryParser.canProcess(sbt) =>
+        SBTRepositoryParser.buildRepository(sbt, groupName)
+      case _ =>
+        None
+    }
   }
 
   /**
@@ -175,10 +179,10 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
           data = data.copy(localPlugins = data.localPlugins + (v._1 -> v._2))
         }
         if (!localPluginFutures.contains(v._1)) {
-          localPluginFutures += v._1 -> fetcher.getLatestVersion(getPluginCoordinates(v._1), mavenLocalPlugins.url, mavenLocalPlugins.user, mavenLocalPlugins.password)
+          localPluginFutures += v._1 -> MavenVersionFetcher.getLatestVersion(getPluginCoordinates(v._1), mavenLocalPlugins.url, mavenLocalPlugins.user, mavenLocalPlugins.password)
         }
         if (!gradlePluginFutures.contains(v._1)) {
-          gradlePluginFutures += v._1 -> fetcher.getLatestVersion(getPluginCoordinates(v._1), mavenGradlePlugins.url, mavenGradlePlugins.user, mavenGradlePlugins.password)
+          gradlePluginFutures += v._1 -> MavenVersionFetcher.getLatestVersion(getPluginCoordinates(v._1), mavenGradlePlugins.url, mavenGradlePlugins.user, mavenGradlePlugins.password)
         }
       })
     })
@@ -206,21 +210,26 @@ class VersionService @Inject()(configuration: Configuration, fetcher: MavenVersi
 
     var localDependencyFutures = Map.empty[String, Future[(String, String)]]
     var centralDependencyFutures = Map.empty[String, Future[(String, String)]]
+    var npmDependencyFutures = Map.empty[String, Future[(String, String)]]
 
     data.repositories.foreach(r => {
       r.versions.foreach(v => {
         if (isHigherVersion(data.localDependencies.get(v._1), v._2)) {
           data = data.copy(localDependencies = data.localDependencies + (v._1 -> v._2))
         }
-        if (!localDependencyFutures.contains(v._1)) {
-          localDependencyFutures += v._1 -> fetcher.getLatestVersion(v._1, mavenLocal.url, mavenLocal.user, mavenLocal.password)
-        }
-        if (!centralDependencyFutures.contains(v._1)) {
-          centralDependencyFutures += v._1 -> fetcher.getLatestVersion(v._1, mavenCentral.url, mavenCentral.user, mavenCentral.password)
+        if (MavenVersionFetcher.isMavenVersion(v._1)) {
+          if (!localDependencyFutures.contains(v._1)) {
+            localDependencyFutures += v._1 -> MavenVersionFetcher.getLatestVersion(v._1, mavenLocal.url, mavenLocal.user, mavenLocal.password)
+          }
+          if (!centralDependencyFutures.contains(v._1)) {
+            centralDependencyFutures += v._1 -> MavenVersionFetcher.getLatestVersion(v._1, mavenCentral.url, mavenCentral.user, mavenCentral.password)
+          }
+        } else if (!npmDependencyFutures.contains(v._1)) {
+          npmDependencyFutures += v._1 -> NpmVersionFetcher.getLatestVersion(v._1, npmRegistryUrl)
         }
       })
     })
-    val sequence = Future.sequence(centralDependencyFutures.values ++ localDependencyFutures.values)
+    val sequence = Future.sequence(centralDependencyFutures.values ++ localDependencyFutures.values ++ npmDependencyFutures.values)
 
     // waiting for all the futures
     val timeout = configuration.get("timeout.compute-versions")(ConfigLoader.finiteDurationLoader)

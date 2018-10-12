@@ -37,7 +37,7 @@ object SBTRepositoryParser extends AbstractParser {
     Some(Repository(name, groupName, artifacts, s"SBT using scala $scalaVersion", Map.empty[String, String], SpringBootData.noData))
   }
 
-  def getBuildFile(repositoryPath: File): File = {
+  override def getBuildFile(repositoryPath: File): File = {
     new File(repositoryPath, buildFileName)
   }
 

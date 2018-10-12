@@ -37,7 +37,7 @@ object MavenRepositoryParser extends AbstractParser {
     Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Maven version: $mavenVersion", plugins, springBootData))
   }
 
-  def getBuildFile(repositoryPath: File): File = {
+  override def getBuildFile(repositoryPath: File): File = {
     new File(repositoryPath, buildFileName)
   }
 

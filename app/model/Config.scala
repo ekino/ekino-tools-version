@@ -5,6 +5,7 @@ import play.api.Configuration
 
 case class Config(conf: Configuration) {
   val filePath: String = conf.get("project.repositories.path")
+  val npmRegistryUrl: String = conf.get("npm.registry.url")
   val mavenLocal = Site(conf.get[Configuration]("maven.local"))
   val mavenLocalPlugins = Site(conf.get[Configuration]("maven.local-plugins"))
   val mavenCentral = Site(conf.get[Configuration]("maven.central"))
