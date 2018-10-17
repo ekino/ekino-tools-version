@@ -5,8 +5,7 @@ import utils.VersionComparator
 /**
   * Dependency DTO.
   */
-case class DisplayPlugin(pluginId: String, gradleVersion: String) {
-  var versions: Map[String, Set[String]] = Map.empty[String, Set[String]]
+case class DisplayPlugin(pluginId: String, gradleVersion: String, versions: Map[String, Set[String]]) {
 
   def getRepositories(plugin: String): Seq[String] = {
     versions
@@ -16,7 +15,7 @@ case class DisplayPlugin(pluginId: String, gradleVersion: String) {
   }
 
   def sortByVersion(s1: String, s2: String): Boolean = {
-    VersionComparator.versionCompare(s1, s2) >= 0
+    VersionComparator.compare(s1, s2) >= 0
   }
 
   /**
@@ -30,7 +29,7 @@ case class DisplayPlugin(pluginId: String, gradleVersion: String) {
     }
     val size = versions.values.flatten.size
     val count = versions
-      .filterKeys(version => VersionComparator.versionCompare(version, gradleVersion) >= 0)
+      .filterKeys(version => VersionComparator.compare(version, gradleVersion) >= 0)
       .values.flatten.size
 
     val result = 100d * count / size

@@ -31,7 +31,7 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
     Logger.info("Update Git Repositories")
     gitRepositoryService.updateGitRepositories()
     Logger.info("Update repositories cache")
-    versionService.fetchRepositories()
+    versionService.initData()
 
     Logger.info("took " + (System.currentTimeMillis - start) + " ms to create cache")
   }

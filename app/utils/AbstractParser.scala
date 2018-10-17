@@ -2,6 +2,7 @@ package utils
 
 import java.io.{File, IOException}
 
+import model.{Repository, SpringBootData}
 import play.api.Logger
 
 import scala.collection.immutable.ListMap
@@ -25,6 +26,8 @@ abstract class AbstractParser {
 
   def canProcess(repository: File): Boolean =
     getBuildFile(repository).exists()
+
+  def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository]
 
   // read a file and extract lines matching a pattern
   protected def extractFromFile(file: File, regex: Regex, extract: ExtractGroups): Map[String, String] = {

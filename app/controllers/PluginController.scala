@@ -12,7 +12,10 @@ class PluginController @Inject()(versionService: VersionService) extends Injecte
 
   def index(pluginId: String) = Action {
     val plugin = versionService.getPlugin(pluginId)
-    Ok(views.html.plugin(plugin))
+    plugin match {
+      case Some(p) => Ok(views.html.plugin(p))
+      case _       => NotFound
+    }
   }
 
 }
