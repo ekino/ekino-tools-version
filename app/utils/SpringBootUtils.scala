@@ -10,7 +10,7 @@ import scala.collection.immutable.ListMap
 object SpringBootUtils {
 
   def getSpringBootOverrides(artifacts: Map[String, String], properties: Map[String, String], springBootData: SpringBootData): Map[String, String] = {
-    var result = ListMap.empty[String, String]
+    val result = ListMap.newBuilder[String, String]
     properties
       .filter(p => !artifacts.exists(_._2 == p._1))
       .filter(p => springBootData.properties.exists(_._1 == p._1))
@@ -22,7 +22,7 @@ object SpringBootUtils {
           result += maybeTuple.get._1 -> p._2
         }
       })
-    result
+    result.result()
   }
 
   def getSpringBootData(plugins: Map[String, String], springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): SpringBootData = {

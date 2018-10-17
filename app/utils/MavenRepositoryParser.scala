@@ -19,7 +19,7 @@ object MavenRepositoryParser extends AbstractParser {
   val mavenVersionRegex: Regex = """<modelVersion>([a-zA-Z0-9.-]+)<\/modelVersion>""".r
   val pluginRegex: Regex = """\s*<plugin>\n\s*<groupId>([a-zA-Z0-9.-]+)<\/groupId>\n\s*<artifactId>([a-zA-Z0-9.-]+)<\/artifactId>\n\s*<version>(?:\$\{)?([a-zA-Z0-9.-]+)(\})?<\/version>""".r
 
-  def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
+  override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     // project files
     val buildFile = getBuildFile(file)
 
@@ -34,7 +34,7 @@ object MavenRepositoryParser extends AbstractParser {
     val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
     val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
 
-    Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Maven version: $mavenVersion", plugins, springBootData))
+    Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Maven $mavenVersion", plugins, springBootData))
   }
 
   override def getBuildFile(repositoryPath: File): File = {

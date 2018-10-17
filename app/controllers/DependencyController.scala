@@ -12,7 +12,10 @@ class DependencyController @Inject()(versionService: VersionService) extends Inj
 
   def dependency(name: String) = Action {
     val dependency = versionService.getDependency(name)
-    Ok(views.html.dependency(dependency))
+    dependency match {
+      case Some(d) => Ok(views.html.dependency(d))
+      case _       => NotFound
+    }
   }
 
   def dependencies() = Action {

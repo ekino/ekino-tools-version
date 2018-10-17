@@ -22,6 +22,7 @@ class VersionService @Inject()(
   private val config = Config(configuration)
   private val springBootDefaultData = springBootVersionService.computeSpringBootData(false)
   private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
+  private val parsers = Seq(NPMRepositoryParser, GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser)
 
   private var data: RepositoryData = RepositoryData.noData
 
@@ -33,7 +34,7 @@ class VersionService @Inject()(
   def listProjects(): Seq[Project] = {
     data.repositories
       .map(DisplayRepository(_, data.localDependencies, data.centralDependencies, data.localPlugins, data.gradlePlugins))
-      .groupBy(_.project())
+      .groupBy(_.project)
       .map(e => Project(e._1, e._2.sortBy(_.name)))
       .toSeq
       .sortWith((a, b) => a.repositories.lengthCompare(b.repositories.size) > 0)
@@ -54,15 +55,10 @@ class VersionService @Inject()(
     * Get a single dependency to display.
     *
     * @param name the dependency name i.e. package:artifactName
-    * @return the DisplayDependency or a new one if not found
+    * @return an option of the DisplayDependency
     */
-  def getDependency(name: String): DisplayDependency = {
-    val option: Option[DisplayDependency] = data.dependencies.find(_.name == name)
-    if (option.isEmpty) {
-      val dependency = DisplayDependency(name, data.centralDependencies.getOrElse(name, ""))
-      data = data.copy(dependencies = data.dependencies :+ dependency)
-      dependency
-    } else option.get
+  def getDependency(name: String): Option[DisplayDependency] = {
+    data.dependencies.find(_.name == name)
   }
 
   /**
@@ -71,32 +67,27 @@ class VersionService @Inject()(
     * @param pluginId the plugin id ex. com.ekino.base
     * @return the DisplayPlugin or a new one if not found
     */
-  def getPlugin(pluginId: String): DisplayPlugin = {
-    val option: Option[DisplayPlugin] = data.plugins.find(_.pluginId == pluginId)
-    if (option.isEmpty) {
-      val plugin = DisplayPlugin(pluginId, data.localPlugins.getOrElse(pluginId, ""))
-      data = data.copy(plugins = data.plugins :+ plugin)
-      plugin
-    } else option.get
+  def getPlugin(pluginId: String): Option[DisplayPlugin] = {
+    data.plugins.find(_.pluginId == pluginId)
   }
 
   def allDependencies(): Seq[DisplayDependency] = data.dependencies.sortBy(_.name)
+
+  def noData: Boolean = data == RepositoryData.noData
 
   /**
     * Initialize the data if needed.
     */
   def initData(): Unit = {
-    if (data.repositories.isEmpty) {
-      val start = System.currentTimeMillis
-      fetchRepositories()
-      Logger.info(s"data has been initialized in ${System.currentTimeMillis - start} ms")
-    }
+    val start = System.currentTimeMillis
+    data = fetchRepositories()
+    Logger.info(s"data has been initialized in ${System.currentTimeMillis - start} ms")
   }
 
   /**
     * Fetch repositories data as repository list, versions, dependencies ...
     */
-  def fetchRepositories() {
+  def fetchRepositories(): RepositoryData = {
     Logger.info("Processing... this will take few seconds")
 
     val workspace: File = new File(config.filePath)
@@ -104,25 +95,13 @@ class VersionService @Inject()(
       gitRepositoryService.updateGitRepositories()
     }
 
-    clearCaches()
+    val repositories = computeRepositories(workspace)
+    val (localDependencies, centralDependencies) = computeDependencyVersions(repositories)
+    val (localPlugins, gradlePlugins) = computePluginVersions(repositories)
+    val plugins = computePlugins(repositories, localPlugins)
+    val dependencies = computeDependencies(repositories, centralDependencies)
 
-    computeRepositories(workspace)
-
-    computePluginVersions()
-
-    computeDependencyVersions()
-
-    computePlugins()
-
-    computeDependencies()
-
-  }
-
-  /**
-    * Clear all the internal cache objects
-    */
-  private def clearCaches(): Unit = {
-    data = RepositoryData.noData
+    RepositoryData(repositories, dependencies, plugins, localDependencies, centralDependencies, localPlugins, gradlePlugins)
   }
 
   /**
@@ -130,9 +109,10 @@ class VersionService @Inject()(
     *
     * @param workspace the parent directory of the repositories
     */
-  private def computeRepositories(workspace: File): Unit = {
-    data = data.copy(repositories = workspace.listFiles()
-      .flatMap(computeRepositoriesForGroup))
+  private def computeRepositories(workspace: File): Seq[Repository] = {
+    workspace.listFiles()
+      .flatMap(getRepositoriesForGroup)
+      .toSeq
   }
 
   /**
@@ -141,133 +121,106 @@ class VersionService @Inject()(
     * @param groupFolder the parent directory of the repositories for this group
     * @return a list of Repository
     */
-  private def computeRepositoriesForGroup(groupFolder: File): Seq[Repository] = {
+  private def getRepositoriesForGroup(groupFolder: File): Seq[Repository] = {
     groupFolder.listFiles
       .filter(_.isDirectory)
       .flatMap(parseDirectory(_, groupFolder.getName))
       .filter(repo => repo.versions.nonEmpty || repo.plugins.nonEmpty)
-
   }
 
   private def parseDirectory(projectFolder: File, groupName: String): Option[Repository] = {
-    projectFolder match {
-      case npm if NPMRepositoryParser.canProcess(npm) =>
-        NPMRepositoryParser.buildRepository(npm, groupName)
-      case gradle if GradleRepositoryParser.canProcess(gradle) =>
-        GradleRepositoryParser.buildRepository(gradle, groupName, springBootDefaultData, springBootMasterData)
-      case mvn if MavenRepositoryParser.canProcess(mvn) =>
-        MavenRepositoryParser.buildRepository(mvn, groupName, springBootDefaultData, springBootMasterData)
-      case sbt if SBTRepositoryParser.canProcess(sbt) =>
-        SBTRepositoryParser.buildRepository(sbt, groupName)
-      case _ =>
-        None
-    }
+    parsers
+      .filter(_.canProcess(projectFolder))
+      .flatMap(_.buildRepository(projectFolder, groupName, springBootDefaultData, springBootMasterData))
+      .reduceOption((r1, r2) => Repository(
+        r1.name,
+        r1.group,
+        r1.versions ++ r2.versions,
+        r1.toolVersion + "/" + r2.toolVersion,
+        r1.plugins ++ r2.versions,
+        r1.springBootData
+      ))
   }
 
   /**
     * Compute local plugin versions.
     */
-  private def computePluginVersions(): Unit = {
-    import config._
+  private def computePluginVersions(repositories: Seq[Repository]): (Map[String, String], Map[String, String]) = {
+    val plugins = repositories
+      .flatMap(_.plugins)
+      .groupBy(_._1)
+      .mapValues(seq => seq.map(_._2).max(VersionComparator))
 
-    var localPluginFutures = Map.empty[String, Future[(String, String)]]
-    var gradlePluginFutures = Map.empty[String, Future[(String, String)]]
+    val localPluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenLocalPlugins))
+    val gradlePluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenGradlePlugins))
 
-    data.repositories.foreach(r => {
-      r.plugins.foreach(v => {
-        if (isHigherVersion(data.localPlugins.get(v._1), v._2)) {
-          data = data.copy(localPlugins = data.localPlugins + (v._1 -> v._2))
-        }
-        if (!localPluginFutures.contains(v._1)) {
-          localPluginFutures += v._1 -> MavenVersionFetcher.getLatestVersion(getPluginCoordinates(v._1), mavenLocalPlugins.url, mavenLocalPlugins.user, mavenLocalPlugins.password)
-        }
-        if (!gradlePluginFutures.contains(v._1)) {
-          gradlePluginFutures += v._1 -> MavenVersionFetcher.getLatestVersion(getPluginCoordinates(v._1), mavenGradlePlugins.url, mavenGradlePlugins.user, mavenGradlePlugins.password)
-        }
-      })
-    })
-    val sequence = Future.sequence(gradlePluginFutures.values ++ localPluginFutures.values)
+    val sequence = Future.sequence(gradlePluginFutures ++ localPluginFutures)
 
     // waiting for all the futures
     val timeout = configuration.get("timeout.compute-plugins")(ConfigLoader.finiteDurationLoader)
     val list = Await.result(sequence, timeout)
 
-    list.foreach { element =>
-      val pluginId = element._1.split(':')(0)
-      if (isHigherVersion(data.gradlePlugins.get(pluginId), element._2)) {
-        data = data.copy(gradlePlugins = data.gradlePlugins + (pluginId -> element._2))
-      }
-    }
+    val result = list.groupBy(_._1).map(p => p._1.split(':')(0) -> p._2.map(_._2).max(VersionComparator))
+
+    (plugins, result)
   }
 
-  private def getPluginCoordinates(pluginId: String): String = pluginId + ":" + pluginId + ".gradle.plugin"
+  private def getPluginCoordinates(pluginId: String): String = s"$pluginId:$pluginId.gradle.plugin"
 
   /**
     * Compute local and central versions.
     */
-  private def computeDependencyVersions(): Unit = {
-    import config._
+  private def computeDependencyVersions(repositories: Seq[Repository]): (Map[String, String], Map[String, String]) = {
+    val dependencies = repositories
+      .flatMap(_.versions)
+      .groupBy(_._1)
+      .mapValues(seq => seq.map(_._2).max(VersionComparator))
 
-    var localDependencyFutures = Map.empty[String, Future[(String, String)]]
-    var centralDependencyFutures = Map.empty[String, Future[(String, String)]]
-    var npmDependencyFutures = Map.empty[String, Future[(String, String)]]
+    val localDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenLocal))
+    val centralDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenCentral))
+    val npmDependencyFutures = dependencies.keys.filter(!MavenVersionFetcher.isMavenVersion(_)).map(NpmVersionFetcher.getLatestVersion(_, config.npmRegistryUrl))
 
-    data.repositories.foreach(r => {
-      r.versions.foreach(v => {
-        if (isHigherVersion(data.localDependencies.get(v._1), v._2)) {
-          data = data.copy(localDependencies = data.localDependencies + (v._1 -> v._2))
-        }
-        if (MavenVersionFetcher.isMavenVersion(v._1)) {
-          if (!localDependencyFutures.contains(v._1)) {
-            localDependencyFutures += v._1 -> MavenVersionFetcher.getLatestVersion(v._1, mavenLocal.url, mavenLocal.user, mavenLocal.password)
-          }
-          if (!centralDependencyFutures.contains(v._1)) {
-            centralDependencyFutures += v._1 -> MavenVersionFetcher.getLatestVersion(v._1, mavenCentral.url, mavenCentral.user, mavenCentral.password)
-          }
-        } else if (!npmDependencyFutures.contains(v._1)) {
-          npmDependencyFutures += v._1 -> NpmVersionFetcher.getLatestVersion(v._1, npmRegistryUrl)
-        }
-      })
-    })
-    val sequence = Future.sequence(centralDependencyFutures.values ++ localDependencyFutures.values ++ npmDependencyFutures.values)
+    val sequence = Future.sequence(centralDependencyFutures ++ localDependencyFutures ++ npmDependencyFutures)
 
     // waiting for all the futures
     val timeout = configuration.get("timeout.compute-versions")(ConfigLoader.finiteDurationLoader)
     val list = Await.result(sequence, timeout)
 
-    list.foreach { element =>
-      if (isHigherVersion(data.centralDependencies.get(element._1), element._2)) {
-        data = data.copy(centralDependencies = data.centralDependencies + (element._1 -> element._2))
-      }
-    }
+    val result = list.groupBy(_._1).mapValues(a => a.map(_._2).max(VersionComparator))
+
+    (dependencies, result)
   }
 
   /**
     * Compute plugin map from repositories
     */
-  private def computePlugins(): Unit = {
-    data.repositories.foreach(r => {
-      r.plugins.foreach(t => {
-        val plugin = getPlugin(t._1)
-        plugin.versions += t._2 -> (plugin.versions.getOrElse(t._2, Set.empty[String]) + r.name)
-      })
-    })
+  private def computePlugins(repositories: Seq[Repository], localPlugins: Map[String, String]): Seq[DisplayPlugin] = {
+    repositories
+      .flatMap(repo => repo.plugins.map(p => (p._1, p._2, repo.name)))
+      .groupBy(_._1)                                                    // groupBy dependency name
+      .mapValues(seq => seq.groupBy(_._2))                              // groupBy dependency version
+      .map(p =>
+        DisplayPlugin(
+          p._1,
+          localPlugins.getOrElse(p._1, ""),
+          p._2.mapValues(b => b.map(c => c._3).toSet)))
+      .toSeq
   }
 
   /**
     * Compute dependency map from repositories
     */
-  private def computeDependencies(): Unit = {
-    data.repositories.foreach(r => {
-      r.versions.foreach(t => {
-        val dependency = getDependency(t._1)
-        dependency.versions += t._2 -> (dependency.versions.getOrElse(t._2, Set.empty[String]) + r.name)
-      })
-    })
-  }
-
-  private def isHigherVersion(existingVersion: Option[String], newVersion: String): Boolean = {
-    existingVersion.isEmpty || VersionComparator.versionCompare(existingVersion.get, newVersion) < 0
+  private def computeDependencies(repositories: Seq[Repository], centralDependencies: Map[String, String]): Seq[DisplayDependency] = {
+    repositories
+      .flatMap(repo => repo.versions.map(v => (v._1, v._2, repo.name))) // extract all the (dependency, version, project name) tuples
+      .groupBy(_._1)                                                    // groupBy dependency name
+      .mapValues(seq => seq.groupBy(_._2))                              // groupBy dependency version
+      .map(a =>
+        DisplayDependency(                                              // create a DisplayDependency with the dependency name
+          a._1,                                                         // and all the projects using it by version
+          centralDependencies.getOrElse(a._1, ""),
+          a._2.mapValues(b => b.map(c => c._3).toSet)))
+      .toSeq
   }
 
 }

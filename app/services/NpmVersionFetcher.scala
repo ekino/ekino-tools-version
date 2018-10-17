@@ -1,16 +1,14 @@
 package services
 
-import java.io.FileNotFoundException
 import java.net.URL
 
 import model.CustomExecutionContext.executionContextExecutor
-import org.apache.commons.codec.binary.Base64
 import play.api.Logger
+import play.api.libs.json.{JsObject, JsString, Json}
 
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.control.NonFatal
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 
 /**
   * Download npm metadata from a npm registry the last release.

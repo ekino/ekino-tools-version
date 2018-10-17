@@ -19,7 +19,7 @@ object SBTRepositoryParser extends AbstractParser {
   val scalaVersionRegex: Regex = """.*scalaVersion (?:in ThisBuild )?:= \"?([^ ",\n]+).*""".r
   val scala2Regex: Regex = """(2.\d+).*""".r
 
-  def buildRepository(file: File, groupName: String): Option[Repository] = {
+  override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     // project files
     val buildFile = getBuildFile(file)
 
@@ -34,7 +34,7 @@ object SBTRepositoryParser extends AbstractParser {
 
     val artifacts = replaceVersionsHolder(extractedArtifacts ++ appendScalaVersion(scalaArtifacts, shortScalaVersion), properties)
 
-    Some(Repository(name, groupName, artifacts, s"SBT using scala $scalaVersion", Map.empty[String, String], SpringBootData.noData))
+    Some(Repository(name, groupName, artifacts, s"SBT with scala $scalaVersion", Map.empty[String, String], SpringBootData.noData))
   }
 
   override def getBuildFile(repositoryPath: File): File = {

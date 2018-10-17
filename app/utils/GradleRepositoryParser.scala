@@ -38,7 +38,7 @@ object GradleRepositoryParser extends AbstractParser {
     """\s*version\s+""" +
     """['"]([_a-zA-Z0-9.-]+)['"]""").r
 
-  def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
+  override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     // project files
     val repositoryPath = file.getPath
     val buildFile = getBuildFile(file)
@@ -61,7 +61,7 @@ object GradleRepositoryParser extends AbstractParser {
       val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
       val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
       val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
-      Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Gradle wrapper version : $gradleVersion" , plugins, springBootData))
+      Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Gradle $gradleVersion" , plugins, springBootData))
     } else {
       // cannot process versions
       None
@@ -69,10 +69,11 @@ object GradleRepositoryParser extends AbstractParser {
   }
 
   override def getBuildFile(repositoryPath: File): File = {
-    var buildFile = new File(repositoryPath, buildFileName)
+    val buildFile = new File(repositoryPath, buildFileName)
     if (!buildFile.exists()) {
-      buildFile = new File(repositoryPath, buildKotlinFileName)
+      new File(repositoryPath, buildKotlinFileName)
+    } else {
+      buildFile
     }
-    buildFile
   }
 }

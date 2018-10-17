@@ -15,7 +15,7 @@ object NPMRepositoryParser extends AbstractParser {
   private val buildFileName = "package.json"
   private val npmVersion = """[~<>=v\^]*(.*)""".r
 
-  def buildRepository(file: File, groupName: String): Option[Repository] = {
+  override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     // project files
     val buildFile = getBuildFile(file)
 
@@ -29,7 +29,7 @@ object NPMRepositoryParser extends AbstractParser {
     val devDependencies = extractDependencies(jsonValues.get("devDependencies"))
     val dependencies = extractDependencies(jsonValues.get("devDependencies"))
 
-    Some(Repository(name, groupName, dependencies ++ devDependencies, s"NPM", Map.empty[String, String], SpringBootData.noData))
+    Some(Repository(name, groupName, dependencies ++ devDependencies, "NPM", Map.empty[String, String], SpringBootData.noData))
   }
 
   override def getBuildFile(repositoryPath: File): File = {

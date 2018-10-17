@@ -5,6 +5,7 @@ import java.net.URL
 import java.util.Base64
 
 import model.CustomExecutionContext.executionContextExecutor
+import model.Site
 import play.api.Logger
 
 import scala.concurrent.Future
@@ -21,7 +22,7 @@ object MavenVersionFetcher {
   val pattern: Regex = "([^:]+):(.+)".r
 
   // download maven-metadata to get the latest repository
-  def getLatestVersion(name: String, mavenUrl: String, mavenUser: String, mavenPassword: String): Future[(String, String)] = Future {
+  def getLatestVersion(name: String, site: Site): Future[(String, String)] = Future {
 
     try {
       val uri = name match {
@@ -29,12 +30,12 @@ object MavenVersionFetcher {
       }
 
       // maven meta data
-      val url = mavenUrl + uri + "/maven-metadata.xml"
+      val url = site.url + uri + "/maven-metadata.xml"
 
       val connection = new URL(url).openConnection
-      if (!mavenUser.isEmpty && !mavenPassword.isEmpty) {
+      if (!site.user.isEmpty && !site.password.isEmpty) {
         connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION,
-          HttpBasicAuth.getHeader(mavenUser, mavenPassword)
+          HttpBasicAuth.getHeader(site.user, site.password)
         )
       }
 
