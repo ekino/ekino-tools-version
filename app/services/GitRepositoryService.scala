@@ -11,11 +11,11 @@ import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import play.api.libs.json.{JsValue, Json}
 import play.api.{ConfigLoader, Configuration, Logger}
+import services.GitRepositoryService._
 
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
-import GitRepositoryService._
 import scala.util.Try
 
 @Singleton
@@ -231,7 +231,7 @@ class GitRepositoryService @Inject()(configuration: Configuration) {
 }
 
 object GitRepositoryService {
-  private val gitlabNextPageHeader = "X-Next-Page"
-  private val githubLinkHeader = "Link"
-  private val githubLastPageLink = "rel=\"first\""
+  val gitlabNextPageHeader = "X-Next-Page"
+  val githubLinkHeader = "Link"
+  val githubLastPageLink = "rel=\"first\""
 }

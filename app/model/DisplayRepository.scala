@@ -6,11 +6,12 @@ import utils.VersionComparator
 /**
   * Repository DTO.
   */
-case class DisplayRepository(repository: Repository,
-                             localDependencies: Map[String, String],
-                             centralDependencies: Map[String, String],
-                             localPlugins: Map[String, String],
-                             gradlePlugins: Map[String, String]) {
+case class DisplayRepository(
+  repository: Repository,
+  localDependencies: Map[String, String],
+  centralDependencies: Map[String, String],
+  localPlugins: Map[String, String],
+  gradlePlugins: Map[String, String]) {
 
   val name: String = repository.name
   val repositoryType: String = getRepositoryType(repository.name)

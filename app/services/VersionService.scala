@@ -160,7 +160,9 @@ class VersionService @Inject()(
     val timeout = configuration.get("timeout.compute-plugins")(ConfigLoader.finiteDurationLoader)
     val list = Await.result(sequence, timeout)
 
-    val result = list.groupBy(_._1).map(p => p._1.split(':')(0) -> p._2.map(_._2).max(VersionComparator))
+    val result = list
+      .groupBy(_._1)
+      .map(p => p._1.split(':')(0) -> p._2.map(_._2).max(VersionComparator))
 
     (plugins, result)
   }
@@ -198,12 +200,12 @@ class VersionService @Inject()(
     repositories
       .flatMap(repo => repo.plugins.map(p => (p._1, p._2, repo.name)))
       .groupBy(_._1)                                                    // groupBy dependency name
-      .mapValues(seq => seq.groupBy(_._2))                              // groupBy dependency version
+      .mapValues(_.groupBy(_._2))                                       // groupBy dependency version
       .map(p =>
         DisplayPlugin(
           p._1,
           localPlugins.getOrElse(p._1, ""),
-          p._2.mapValues(b => b.map(c => c._3).toSet)))
+          p._2.mapValues(_.map(_._3).toSet)))
       .toSeq
   }
 
@@ -214,12 +216,12 @@ class VersionService @Inject()(
     repositories
       .flatMap(repo => repo.versions.map(v => (v._1, v._2, repo.name))) // extract all the (dependency, version, project name) tuples
       .groupBy(_._1)                                                    // groupBy dependency name
-      .mapValues(seq => seq.groupBy(_._2))                              // groupBy dependency version
-      .map(a =>
+      .mapValues(_.groupBy(_._2))                                       // groupBy dependency version
+      .map(d =>
         DisplayDependency(                                              // create a DisplayDependency with the dependency name
-          a._1,                                                         // and all the projects using it by version
-          centralDependencies.getOrElse(a._1, ""),
-          a._2.mapValues(b => b.map(c => c._3).toSet)))
+          d._1,                                                         // and all the projects using it by version
+          centralDependencies.getOrElse(d._1, ""),
+          d._2.mapValues(_.map(_._3).toSet)))
       .toSeq
   }
 
