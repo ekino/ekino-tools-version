@@ -30,5 +30,6 @@ dependencies {
     play     group: 'org.slf4j',              name: 'slf4j-simple',            version: property('slf4j-simple.version')
     play     group: 'org.eclipse.jgit',       name: 'org.eclipse.jgit',        version: property('org.eclipse.jgit.version')
     play     group: 'com.typesafe.play',      name: 'play-guice_2.12',         version: property('play.version')
+    play     group: 'net.codingwell',         name: 'scala-guice_2.12',        version: property('scala-guice.version')
     playTest group: 'org.scalatestplus.play', name: 'scalatestplus-play_2.12', version: property('scalatestplus-play_2.12.version')
 }
