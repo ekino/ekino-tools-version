@@ -1,6 +1,7 @@
-package job
+package modules
 
 import com.google.inject.AbstractModule
+import job.{Scheduler, UpdaterActor}
 import play.api.libs.concurrent.AkkaGuiceSupport
 
 /**
