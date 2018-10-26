@@ -137,7 +137,7 @@ class VersionService @Inject()(
         r1.group,
         r1.versions ++ r2.versions,
         r1.toolVersion + "/" + r2.toolVersion,
-        r1.plugins ++ r2.versions,
+        r1.plugins ++ r2.plugins,
         r1.springBootData
       ))
   }
