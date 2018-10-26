@@ -24,7 +24,7 @@ abstract class AbstractDisplay(name: String, version: String, versions: Map[Stri
     }
     val size = versions.values.flatten.size
     val count = versions
-      .filterKeys(version => VersionComparator.compare(version, version) >= 0)
+      .filterKeys(VersionComparator.compare(_, version) >= 0)
       .values.flatten.size
 
     val result = 100d * count / size
