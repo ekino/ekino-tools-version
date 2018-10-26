@@ -68,8 +68,9 @@ tr {
     color: #555555;
 }
 
-.springboot img {
-    width: 5%;
+.small-image img {
+    height: 1em;
+    width: 1em;
  }
 
 .springboot-equal a span {
