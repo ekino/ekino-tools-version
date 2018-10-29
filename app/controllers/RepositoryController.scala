@@ -11,8 +11,9 @@ import services.VersionService
 class RepositoryController @Inject()(versionService: VersionService) extends InjectedController {
 
   def index(name: String) = Action {
+    val springBootData = versionService.springBootDefaultData
     versionService.getRepository(name) match {
-      case Some(repository) => Ok(views.html.repository(repository))
+      case Some(repository) => Ok(views.html.repository(repository, springBootData))
       case None             => NotFound
     }
   }

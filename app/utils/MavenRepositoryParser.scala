@@ -34,7 +34,7 @@ object MavenRepositoryParser extends AbstractParser {
     val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
     val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
 
-    Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Maven $mavenVersion", plugins, springBootData))
+    Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Maven $mavenVersion", plugins))
   }
 
   override def getBuildFile(repositoryPath: File): File = {

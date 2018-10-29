@@ -16,8 +16,9 @@ class VersionService @Inject()(
   gitRepositoryService: GitRepositoryService,
   springBootVersionService: SpringBootVersionService) {
 
+  val springBootDefaultData: SpringBootData = springBootVersionService.computeSpringBootData(false)
+
   private val config = Config(configuration)
-  private val springBootDefaultData = springBootVersionService.computeSpringBootData(false)
   private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
   private val parsers = Seq(NPMRepositoryParser, GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser)
 
@@ -134,8 +135,7 @@ class VersionService @Inject()(
         r1.group,
         r1.versions ++ r2.versions,
         r1.toolVersion + "/" + r2.toolVersion,
-        r1.plugins ++ r2.plugins,
-        r1.springBootData
+        r1.plugins ++ r2.plugins
       ))
   }
 

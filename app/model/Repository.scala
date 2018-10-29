@@ -8,5 +8,4 @@ case class Repository(
   group: String,
   versions: Map[String, String],
   toolVersion: String,
-  plugins: Map[String, String],
-  springBootData: SpringBootData)
+  plugins: Map[String, String])

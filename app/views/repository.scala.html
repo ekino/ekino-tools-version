@@ -1,5 +1,6 @@
 @import model.DisplayRepository
-@(repository: DisplayRepository)
+@import model.SpringBootData
+@(repository: DisplayRepository, springBootData: SpringBootData)
 
 <!DOCTYPE html>
 
@@ -41,13 +42,13 @@
                     <tbody>
                     @for(version <- repository.repository.versions.keys.toSeq) {
                         <tr>
-                            <td class="@repository.springBootVersion(version)">
+                            <td class="@repository.springBootVersion(version, springBootData)">
                                 <span class="small-image"><img src="@routes.Assets.at("images/" + (if (utils.DependencyHelper.isWithPackage(version)) "java" else "nodejs") + ".svg")"></span>
                                 <a href="@routes.DependencyController.dependency(version)" role="button">
                                     <span>@version</span>
                                 </a>
-                                @if(repository.springBootVersion(version) != "") {
-                                    <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(version) + ".svg")"></span>
+                                @if(repository.springBootVersion(version, springBootData) != "") {
+                                    <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(version, springBootData) + ".svg")"></span>
                                 }
                                 @if(repository.isVersionUpToDate(version)) {
                                     <span class="pull-right glyphicon glyphicon-ok" ></span>

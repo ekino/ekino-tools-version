@@ -34,7 +34,7 @@ object SBTRepositoryParser extends AbstractParser {
 
     val artifacts = replaceVersionsHolder(extractedArtifacts ++ appendScalaVersion(scalaArtifacts, shortScalaVersion), properties)
 
-    Some(Repository(name, groupName, artifacts, s"SBT with scala $scalaVersion", Map.empty[String, String], SpringBootData.noData))
+    Some(Repository(name, groupName, artifacts, s"SBT with scala $scalaVersion", Map.empty[String, String]))
   }
 
   override def getBuildFile(repositoryPath: File): File = {
