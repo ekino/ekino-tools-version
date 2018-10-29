@@ -46,8 +46,6 @@ case class DisplayRepository(
     }
   }
 
-  def isJava(dependency: String): Boolean = dependency.contains(":")
-
   /**
     * Indicates whether a plugin version is up-to-date with other repositories.
     *

@@ -24,6 +24,7 @@
                 <div id="search-list" class="versions list-group control-group accordion">
                     @for(dependency <- dependencies) {
                         <a href="@routes.DependencyController.dependency(dependency.name)" class="list-group-item repository dependency">
+                            <span class="small-image"><img src="@routes.Assets.at("images/" + (if (utils.DependencyHelper.isWithPackage(dependency.name)) "java" else "nodejs") + ".svg")"></span>
                             <span class="name">
                                 @dependency.name
                             </span>
