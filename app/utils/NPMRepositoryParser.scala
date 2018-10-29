@@ -32,24 +32,19 @@ object NPMRepositoryParser extends AbstractParser {
     Some(Repository(name, groupName, dependencies ++ devDependencies, "NPM", Map.empty[String, String], SpringBootData.noData))
   }
 
-  override def getBuildFile(repositoryPath: File): File = {
-    new File(repositoryPath, buildFileName)
-  }
+  override def getBuildFile(repositoryPath: File): File = new File(repositoryPath, buildFileName)
 
-  private def extractDependencies(value: Option[JsValue]): Map[String, String] = {
+  private def extractDependencies(value: Option[JsValue]): Map[String, String] =
     value
       .map(_.as[JsObject]
         .value
         .mapValues(v => trimVersion(v.as[JsString].value)))
       .getOrElse(Map.empty)
       .toMap
-  }
 
-  private def trimVersion(version: String) = {
+  private def trimVersion(version: String) =
     version match {
       case npmVersion(v) => v
     }
-  }
-
 }
 

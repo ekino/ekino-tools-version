@@ -3,12 +3,9 @@ package services
 import java.io.File
 
 import javax.inject.{Inject, Singleton}
-import model.CustomExecutionContext.executionContextExecutor
 import model._
-import play.api.{ConfigLoader, Configuration, Logger}
+import play.api.{Configuration, Logger}
 import utils._
-
-import scala.concurrent.{Await, Future}
 
 /**
   * Main versions service.
@@ -154,11 +151,7 @@ class VersionService @Inject()(
     val localPluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenLocalPlugins))
     val gradlePluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenGradlePlugins))
 
-    val sequence = Future.sequence(gradlePluginFutures ++ localPluginFutures)
-
-    // waiting for all the futures
-    val timeout = configuration.get("timeout.compute-plugins")(ConfigLoader.finiteDurationLoader)
-    val list = Await.result(sequence, timeout)
+    val list = FutureHelper.await[(String, String)](localPluginFutures ++ gradlePluginFutures, configuration, "timeout.compute-plugins")
 
     val result = list
       .groupBy(_._1)
@@ -182,11 +175,7 @@ class VersionService @Inject()(
     val centralDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenCentral))
     val npmDependencyFutures = dependencies.keys.filter(!MavenVersionFetcher.isMavenVersion(_)).map(NpmVersionFetcher.getLatestVersion(_, config.npmRegistryUrl))
 
-    val sequence = Future.sequence(centralDependencyFutures ++ localDependencyFutures ++ npmDependencyFutures)
-
-    // waiting for all the futures
-    val timeout = configuration.get("timeout.compute-versions")(ConfigLoader.finiteDurationLoader)
-    val list = Await.result(sequence, timeout)
+    val list = FutureHelper.await[(String, String)](centralDependencyFutures ++ localDependencyFutures ++ npmDependencyFutures, configuration, "timeout.compute-plugins")
 
     val result = list.groupBy(_._1).mapValues(a => a.map(_._2).max(VersionComparator))
 

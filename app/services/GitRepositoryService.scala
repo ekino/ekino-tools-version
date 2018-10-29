@@ -8,9 +8,10 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.RefNotAdvertisedException
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
-import play.api.{ConfigLoader, Configuration, Logger}
+import play.api.{Configuration, Logger}
+import utils.FutureHelper
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.util.Try
 
@@ -31,11 +32,8 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     }
 
     val updatedRepositories: Seq[Future[Unit]] = fetchRepositories().map(updateGitRepository)
-    val sequence = Future.sequence(updatedRepositories)
 
-    // waiting for all the futures
-    val timeout = configuration.get("timeout.git-update")(ConfigLoader.finiteDurationLoader)
-    Await.result(sequence, timeout)
+    FutureHelper.await[Unit](updatedRepositories, configuration, "timeout.git-update")
   }
 
   /**
@@ -118,10 +116,11 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     * @return a sequence of all the repositories
     */
   private def fetchRepositories(): Seq[GitRepository] = {
-    // todo(all): retrieve the urls in parallel
-    gitHosts
-      .flatMap(_.getRepositories)
+    val repositories = gitHosts
+      .map(host => Future { host.getRepositories })
       .toSeq
+
+    FutureHelper.await[Seq[GitRepository]](repositories, configuration, "timeout.fetch-repositories").flatten
   }
 
   private def getProperty(property: String): String = configuration.getOptional[String](property).getOrElse("")
