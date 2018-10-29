@@ -27,7 +27,7 @@ object NPMRepositoryParser extends AbstractParser {
       .getOrElse(file.getName)
 
     val devDependencies = extractDependencies(jsonValues.get("devDependencies"))
-    val dependencies = extractDependencies(jsonValues.get("devDependencies"))
+    val dependencies = extractDependencies(jsonValues.get("dependencies"))
 
     Some(Repository(name, groupName, dependencies ++ devDependencies, "NPM", Map.empty[String, String], SpringBootData.noData))
   }
