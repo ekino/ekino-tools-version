@@ -20,4 +20,6 @@ trait GitHost {
 /**
   * Wrapper around a Git repository [[url]], given a [[user]] accessing it with a [[token]].
   */
-case class GitRepository(url: String, user: String, token: String)
+case class GitRepository(url: String, user: String, token: String) {
+  override def toString = s"GitRepository($url,$user)"
+}
