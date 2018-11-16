@@ -34,7 +34,7 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
 
     val pageUrls = repositories.as[Seq[JsValue]]
       .map(repository => (repository \ "html_url").as[String])
-      .filter(name => !name.contains(ignored))
+      .filter(name => !ignored.contains(name))
       .map(repository => GitRepository(repository, getProperty("github.user").getOrElse(""), gitHubToken))
 
     val urls = accumulator ++ pageUrls

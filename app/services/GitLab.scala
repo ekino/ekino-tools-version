@@ -35,7 +35,7 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
 
     val pageUrls = repositories.as[Seq[JsValue]]
       .map(repository => (repository \ "path_with_namespace").as[String])
-      .filter(name => !name.contains(ignored))
+      .filter(name => !ignored.contains(name))
       .map(gitlabUrl + "/" + _)
       .map(repository => GitRepository(repository, getProperty("gitlab.user").getOrElse(""), gitlabToken))
 
