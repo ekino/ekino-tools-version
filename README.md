@@ -72,6 +72,10 @@ $ docker run --env-file credentials-docker --rm -p "8080:8080" -v "/tmp/versions
 Test the application on url http://localhost:8080/
 
 
+## Using sbt
+You can also use sbt instead of gradle. It offers a better integration with intelliJ and allows debug.
+
+
 ## Documentation
 
 * https://www.playframework.com/documentation/2.6.x/Home
