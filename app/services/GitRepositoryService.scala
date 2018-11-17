@@ -68,6 +68,8 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     */
   private def pullRepository(repository: GitRepository, repositoryDirectory: File): Unit = {
     val repositoryUrl = repository.url
+    Logger.info(s"Pulling repository $repositoryUrl")
+
     val git = new Git(new FileRepository(repositoryDirectory.getAbsolutePath + "/.git"))
 
     val command = git

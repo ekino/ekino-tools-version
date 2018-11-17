@@ -17,12 +17,12 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     getProperty("gitlab.group-ids")
 
   override def getRepositories: Seq[GitRepository] = getGroups
-    .flatMap(group => fetchGitlabUrls(getProperty("gitlab.url").getOrElse(""), getProperty("gitlab.token").getOrElse(""), group, getIgnoredUrls))
+    .flatMap(group => fetchGitlabUrls(group))
 
   /**
     * Fetch the repository urls recursively for the given group ID using GitLab API.
     */
-  private def fetchGitlabUrls(gitlabUrl: String, gitlabToken: String, groupId: String, ignored: Seq[String], page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
+  private def fetchGitlabUrls(groupId: String, page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
     val url: String = s"$gitlabUrl/api/v4/groups/$groupId/projects?per_page=100&page=$page"
 
     val connection = new URL(url).openConnection
@@ -33,11 +33,11 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     // getting the project list of gitlab group
     val repositories = Json.parse(rawRepositories)
 
+    val ignored = getIgnoredUrls
     val pageUrls = repositories.as[Seq[JsValue]]
       .map(repository => (repository \ "path_with_namespace").as[String])
       .filter(name => !ignored.contains(name))
-      .map(gitlabUrl + "/" + _)
-      .map(repository => GitRepository(repository, getProperty("gitlab.user").getOrElse(""), gitlabToken))
+      .map(getGitRepository)
 
     val urls = accumulator ++ pageUrls
 
@@ -45,7 +45,15 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
       Logger.info(s"gitlab repositories: $urls")
       urls
     } else {
-      fetchGitlabUrls(gitlabUrl, gitlabToken, groupId, ignored, page + 1, urls)
+      fetchGitlabUrls(groupId, page + 1, urls)
     }
   }
+
+  private def getGitRepository(repository: String): GitRepository = {
+    GitRepository(gitlabUrl + "/" + repository, getProperty("gitlab.user").getOrElse(""), gitlabToken)
+  }
+
+  private def gitlabUrl: String = getProperty("gitlab.url").getOrElse("")
+
+  private def gitlabToken: String = getProperty("gitlab.token").getOrElse("")
 }

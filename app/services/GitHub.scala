@@ -18,12 +18,12 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     getProperty("github.users")
 
   override def getRepositories: Seq[GitRepository] = getGroups
-    .flatMap(group => fetchRepositoryUrls(group, getIgnoredUrls, getProperty("github.token").getOrElse("")))
+    .flatMap(group => fetchRepositoryUrls(group))
 
   /**
     * Fetch the repository urls recursively for the given user using GitHub API.
     */
-  private def fetchRepositoryUrls(user: String, ignored: Seq[String], gitHubToken: String, page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
+  private def fetchRepositoryUrls(user: String, page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
     val url: String = s"https://api.github.com/users/$user/repos?access_token=$gitHubToken&per_page=100&page=$page"
 
     val connection = new URL(url).openConnection
@@ -32,22 +32,29 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     // getting the project list of github user
     val repositories = Json.parse(rawRepositories)
 
+    val ignored = getIgnoredUrls
     val pageUrls = repositories.as[Seq[JsValue]]
       .map(repository => (repository \ "html_url").as[String])
       .filter(name => !ignored.contains(name))
-      .map(repository => GitRepository(repository, getProperty("github.user").getOrElse(""), gitHubToken))
+      .map(getGitRepository)
 
     val urls = accumulator ++ pageUrls
 
     val linkHeader = connection.getHeaderField(linkHeaderField)
 
-    Logger.info(s"head : $linkHeader")
+    Logger.debug(s"head : $linkHeader")
 
     if (linkHeader == null || linkHeader.contains(lastPageLink)) {
       Logger.info(s"github repositories: $urls")
       urls
     } else {
-      fetchRepositoryUrls(user, ignored, gitHubToken, page + 1, urls)
+      fetchRepositoryUrls(user, page + 1, urls)
     }
   }
+
+  private def getGitRepository(repository: String): GitRepository = {
+    GitRepository(repository, getProperty("github.user").getOrElse(""), gitHubToken)
+  }
+
+  private def gitHubToken: String = getProperty("github.token").getOrElse("")
 }
