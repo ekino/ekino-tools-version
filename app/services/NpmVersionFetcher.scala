@@ -1,8 +1,10 @@
 package services
 
+import java.io.FileNotFoundException
 import java.net.URL
 
 import model.CustomExecutionContext.executionContextExecutor
+import model.Site
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsString, Json}
 
@@ -22,13 +24,18 @@ object NpmVersionFetcher {
 
 
   // download npm metadata to get the latest version
-  def getLatestVersion(name: String, npmUrl: String): Future[(String, String)] = Future {
+  def getLatestVersion(name: String, site: Site): Future[(String, String)] = Future {
 
     try {
       // npm meta data url
-      val url = npmUrl + name
+      val url = site.url + name
 
       val connection = new URL(url).openConnection
+      if (!site.user.isEmpty && !site.password.isEmpty) {
+        connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION,
+          HttpBasicAuth.getHeader(site.user, site.password)
+        )
+      }
       connection.setRequestProperty(ACCEPT, NPM_JSON)
 
       val source = Source.fromInputStream(connection.getInputStream).getLines.mkString
@@ -45,6 +52,7 @@ object NpmVersionFetcher {
       (name, version)
 
     } catch {
+      case _: FileNotFoundException => (name, "")
       case NonFatal(e) =>
         Logger.error(s"Unexpected exception for $name", e)
         (name, "")
