@@ -17,8 +17,12 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
   override def getRawGroups: Option[String] =
     getProperty("github.users")
 
-  override def getRepositories: Seq[GitRepository] = getGroups
-    .flatMap(group => fetchRepositoryUrls(group))
+  override def getRepositories: Seq[GitRepository] = {
+    val repositories = getGroups
+      .flatMap(group => fetchRepositoryUrls(group))
+    val additionalRepositories = getAdditionalUrls.map(getGitRepository)
+    repositories ++ additionalRepositories
+  }
 
   /**
     * Fetch the repository urls recursively for the given user using GitHub API.

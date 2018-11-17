@@ -29,6 +29,10 @@ abstract class AbstractGitHost(repositoryName: String,
     getPropertyList(repositoryName + ".ignored-repositories")
       .getOrElse(Seq.empty)
 
+  protected def getAdditionalUrls: Seq[String] =
+    getPropertyList(repositoryName + ".additional-repositories")
+      .getOrElse(Seq.empty)
+
   protected def getProperty(property: String): Option[String] = configuration.getOptional[String](property)
 
   protected def getPropertyList(property: String): Option[Seq[String]] = configuration.getOptional[Seq[String]](property)

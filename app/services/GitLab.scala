@@ -16,8 +16,12 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
   override def getRawGroups: Option[String] =
     getProperty("gitlab.group-ids")
 
-  override def getRepositories: Seq[GitRepository] = getGroups
-    .flatMap(group => fetchGitlabUrls(group))
+  override def getRepositories: Seq[GitRepository] = {
+    val repositories = getGroups
+      .flatMap(group => fetchGitlabUrls(group))
+    val additionalRepositories = getAdditionalUrls.map(getGitRepository)
+    repositories ++ additionalRepositories
+  }
 
   /**
     * Fetch the repository urls recursively for the given group ID using GitLab API.
