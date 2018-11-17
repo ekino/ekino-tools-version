@@ -22,7 +22,7 @@ class VersionService @Inject()(
   private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
   private val parsers = Seq(NPMRepositoryParser, GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser)
 
-  private var data: RepositoryData = RepositoryData.noData
+  @volatile private var data: RepositoryData = RepositoryData.noData
 
   /**
     * List all the projects to display.
