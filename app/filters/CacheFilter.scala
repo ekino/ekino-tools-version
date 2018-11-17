@@ -24,10 +24,16 @@ class CacheFilter @Inject()
   def apply(nextFilter: RequestHeader => Future[Result])
     (requestHeader: RequestHeader): Future[Result] = {
 
-    val timeout = configuration.get("timeout.clear-cache")(ConfigLoader.finiteDurationLoader)
     if (versionService.noData) {
-      ask(updaterActor, InitMessage)(Timeout(timeout))
-        .flatMap(_ => nextFilter(requestHeader))
+      val synchronousClearCache = configuration.get[Boolean]("synchronous-clear-cache")
+      if (synchronousClearCache) {
+        val timeout = configuration.get("timeout.clear-cache")(ConfigLoader.finiteDurationLoader)
+        ask(updaterActor, InitMessage)(Timeout(timeout))
+          .flatMap(_ => nextFilter(requestHeader))
+      } else {
+        updaterActor ! InitMessage
+        nextFilter(requestHeader)
+      }
     } else {
       nextFilter(requestHeader)
     }
