@@ -93,7 +93,7 @@ class VersionService @Inject()(
       gitRepositoryService.updateGitRepositories()
     }
 
-    val repositories = computeRepositories(workspace)
+    val repositories = findRepositories(workspace)
     val (localDependencies, centralDependencies) = computeDependencyVersions(repositories)
     val (localPlugins, gradlePlugins) = computePluginVersions(repositories)
     val plugins = computePlugins(repositories, localPlugins)
@@ -103,33 +103,26 @@ class VersionService @Inject()(
   }
 
   /**
-    * Parse all repositories from workspace.
+    * Walk the tree to find the repositories
     *
-    * @param workspace the parent directory of the repositories
+    * @param directory the current directory
+    * @return the repositories
     */
-  private def computeRepositories(workspace: File): Seq[Repository] = {
-    workspace.listFiles()
-      .flatMap(getRepositoriesForGroup)
-      .toSeq
+  private def findRepositories(directory: File): Seq[Repository] = {
+    val files = directory.listFiles
+    if (files.exists(_.isFile)) {
+      parseRepository(directory).toSeq
+    } else {
+      files
+        .flatMap(findRepositories)
+        .toSeq
+    }
   }
 
-  /**
-    * Parse all repositories from the group folder.
-    *
-    * @param groupFolder the parent directory of the repositories for this group
-    * @return a list of Repository
-    */
-  private def getRepositoriesForGroup(groupFolder: File): Seq[Repository] = {
-    groupFolder.listFiles
-      .filter(_.isDirectory)
-      .flatMap(parseDirectory(_, groupFolder.getName))
-      .filter(repo => repo.versions.nonEmpty || repo.plugins.nonEmpty)
-  }
-
-  private def parseDirectory(projectFolder: File, groupName: String): Option[Repository] = {
+  private def parseRepository(projectFolder: File): Option[Repository] = {
     parsers
       .filter(_.canProcess(projectFolder))
-      .flatMap(_.buildRepository(projectFolder, groupName, springBootDefaultData, springBootMasterData))
+      .flatMap(_.buildRepository(projectFolder, projectFolder.getParentFile.getName, springBootDefaultData, springBootMasterData))
       .reduceOption((r1, r2) => Repository(
         r1.name,
         r1.group,
@@ -137,6 +130,7 @@ class VersionService @Inject()(
         r1.toolVersion + "/" + r2.toolVersion,
         r1.plugins ++ r2.plugins
       ))
+      .filter(repo => repo.versions.nonEmpty || repo.plugins.nonEmpty)
   }
 
   /**
