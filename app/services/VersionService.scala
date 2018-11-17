@@ -173,7 +173,7 @@ class VersionService @Inject()(
 
     val localDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenLocal))
     val centralDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenCentral))
-    val npmDependencyFutures = dependencies.keys.filter(!MavenVersionFetcher.isMavenVersion(_)).map(NpmVersionFetcher.getLatestVersion(_, config.npmRegistryUrl))
+    val npmDependencyFutures = dependencies.keys.filter(!MavenVersionFetcher.isMavenVersion(_)).map(NpmVersionFetcher.getLatestVersion(_, config.npmRegistry))
 
     val list = FutureHelper.await[(String, String)](centralDependencyFutures ++ localDependencyFutures ++ npmDependencyFutures, configuration, "timeout.compute-plugins")
 

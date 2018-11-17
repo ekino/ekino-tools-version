@@ -2,7 +2,6 @@ package services
 
 import java.io.FileNotFoundException
 import java.net.URL
-import java.util.Base64
 
 import model.CustomExecutionContext.executionContextExecutor
 import model.Site
@@ -61,16 +60,5 @@ object MavenVersionFetcher {
       case pattern(_, _) => true
       case _             => false
     }
-
-  object HttpBasicAuth {
-    val BASIC = "Basic"
-    val AUTHORIZATION = "Authorization"
-
-    def getHeader(username: String, password: String): String =
-      BASIC + " " + encodeCredentials(username, password)
-
-    def encodeCredentials(username: String, password: String): String =
-      new String(Base64.getEncoder.encode((username + ":" + password).getBytes))
-  }
 
 }
