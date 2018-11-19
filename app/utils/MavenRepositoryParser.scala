@@ -28,8 +28,9 @@ object MavenRepositoryParser extends AbstractParser {
 
     val properties = extractFromFile(buildFile, propertyRegex, extractProperties)
     val mavenVersion = extractFromFile(buildFile, mavenVersionRegex, extractValue).getOrElse("value", "")
-    val plugins = extractFromFile(buildFile, pluginRegex, extractArtifacts)
+    val extractedPlugins = extractFromFile(buildFile, pluginRegex, extractArtifacts)
     val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
+    val plugins = replaceVersionsHolder(extractedPlugins, properties)
 
     val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
     val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
