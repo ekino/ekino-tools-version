@@ -14,7 +14,7 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
 
   def receive: PartialFunction[Any, Unit] = {
     case InitMessage =>
-      versionService.initData()
+      init()
       sender() ! SuccessMessage
     case UpdateMessage =>
       update()
@@ -23,6 +23,12 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
       sender() ! SuccessMessage
     case message  =>
       Logger.error(s"Cannot process message: $message")
+  }
+
+  def init(): Unit = {
+    if (versionService.noData) {
+      versionService.initData()
+    }
   }
 
   def update(): Unit = {
