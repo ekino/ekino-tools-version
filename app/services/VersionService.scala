@@ -155,12 +155,26 @@ class VersionService @Inject()(
 
     val result = list
       .groupBy(_._1)
-      .map(p => p._1.split(':')(0) -> p._2.map(_._2).max(VersionComparator))
+      .map(p => getPluginId(p._1) -> p._2.map(_._2).max(VersionComparator))
 
     (plugins, result)
   }
 
-  private def getPluginCoordinates(pluginId: String): String = s"$pluginId:$pluginId.gradle.plugin"
+  private def getPluginCoordinates(pluginId: String): String = {
+    if (pluginId.contains(':')) {
+      pluginId
+    } else {
+      s"$pluginId:$pluginId.gradle.plugin"
+    }
+  }
+
+  private def getPluginId(pluginCoordinates: String): String = {
+    if (pluginCoordinates.endsWith(".gradle.plugin")) {
+      pluginCoordinates.split(':')(0)
+    } else {
+      pluginCoordinates
+    }
+  }
 
   /**
     * Compute local and central versions.
