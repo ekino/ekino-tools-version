@@ -25,7 +25,7 @@ object GradleRepositoryParser extends AbstractParser {
     """\(?['"]""" +
     """(?<groupId>[_a-zA-Z0-9.-]+)""" +
     """[':"]""" +
-    """(?:,\s*name\s*[:=]\s*['"])?""" +
+    """(?:\s*,\s*name\s*[:=]\s*['"])?""" +
     """(?<artefactId>[_a-zA-Z0-9.-]+)""" +
     """(?:.*)(?:property\(['"]|\$\{?|:)""" +
     """(?<version>[_a-zA-Z0-9.-]+)""").r
