@@ -44,9 +44,12 @@ function activateTab(projectName) {
 
     // Show the specific tab content
     let tab, nav;
-    if (projectName) {
-        tab = document.getElementById(`tab${projectName}`);
-        nav = document.getElementById(`nav${projectName}`);
+    const selectedTab = projectName || localStorage.getItem("selectedTab");
+    if (selectedTab) {
+        tab = document.getElementById(`tab${selectedTab}`);
+        nav = document.getElementById(`nav${selectedTab}`);
+        // Store
+        localStorage.setItem("selectedTab", selectedTab);
     } else {
         tab = document.getElementsByClassName('tabcontent')[0];
         nav = document.getElementsByClassName('nav-item')[0];

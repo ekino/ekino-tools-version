@@ -20,7 +20,7 @@ class VersionService @Inject()(
 
   private val config = Config(configuration)
   private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
-  private val parsers = Seq(NPMRepositoryParser, GradleRepositoryParser, MavenRepositoryParser, SBTRepositoryParser)
+  private val parsers = Seq(NPMRepositoryParser, SBTRepositoryParser, MavenRepositoryParser, GradleRepositoryParser)
 
   @volatile private var data: RepositoryData = RepositoryData.noData
 
