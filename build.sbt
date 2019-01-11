@@ -2,7 +2,7 @@ import java.util.Properties
 
 name := "ekino-tools-version"
 version := "1.0.0"
-scalaVersion := "2.12.7"
+scalaVersion := "2.12.8"
 
 val gradleProperties = settingKey[Properties]("The gradle properties")
 gradleProperties := {
@@ -12,10 +12,10 @@ gradleProperties := {
 }
 
 libraryDependencies += guice
-libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % gradleProperties.value.getProperty("org.eclipse.jgit.version")
-libraryDependencies += "net.codingwell" %% "scala-guice" % gradleProperties.value.getProperty("scala-guice.version")
+libraryDependencies += "org.eclipse.jgit"        % "org.eclipse.jgit"   % gradleProperties.value.getProperty("org.eclipse.jgit.version")
+libraryDependencies += "net.codingwell"         %% "scala-guice"        % gradleProperties.value.getProperty("scala-guice.version")
 
-libraryDependencies += specs2 % Test
+libraryDependencies += specs2                    % Test
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % gradleProperties.value.getProperty("scalatestplus-play_2.12.version") % Test
 
 routesGenerator := InjectedRoutesGenerator
