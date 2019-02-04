@@ -3,7 +3,7 @@ package utils
 import java.io.File
 
 import model.{Repository, SpringBootData}
-import play.Logger
+import play.api.Logger
 
 import scala.util.matching.Regex
 
@@ -37,6 +37,7 @@ object GradleRepositoryParser extends AbstractParser {
     """['"]([_a-zA-Z0-9.-]+)['"]\)?""" +
     """\s*version\s+""" +
     """['"]([_a-zA-Z0-9.-]+)['"]""").r
+  private val logger = Logger(GradleRepositoryParser.getClass)
 
   override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     // project files
@@ -49,12 +50,12 @@ object GradleRepositoryParser extends AbstractParser {
     if (buildFile.exists && propertiesFile.exists) {
 
       val name = extractFromFile(settingsFile, projectNameRegex, extractValue).getOrElse("value", file.getName)
-      Logger.info(s"name $name")
+      logger.info(s"name $name")
       val extractedArtifacts = extractFromFile(buildFile, artifactRegex, extractArtifacts)
-      Logger.debug(s"artifacts $extractedArtifacts")
+      logger.debug(s"artifacts $extractedArtifacts")
       val properties = extractFromFile(propertiesFile, propertyRegex, extractProperties)
 
-      Logger.debug(s"properties $properties")
+      logger.debug(s"properties $properties")
 
       val gradleVersion = extractFromFile(gradleVersionFile, gradleVersionRegex, extractValue).getOrElse("value", "")
       val plugins = extractFromFile(buildFile, pluginRegex, extractProperties)

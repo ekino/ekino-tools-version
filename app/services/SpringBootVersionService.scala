@@ -18,6 +18,7 @@ import scala.xml.XML
 class SpringBootVersionService @Inject()(configuration: Configuration) {
 
   private val propertyRegex = """\$\{(.*)\}""".r
+  private val logger = Logger(classOf[SpringBootVersionService])
 
   def computeSpringBootData(master: Boolean): SpringBootData = {
     if (master) {
@@ -36,14 +37,14 @@ class SpringBootVersionService @Inject()(configuration: Configuration) {
     val dependencyMap = dependencies
       .map(dependency => (dependency \ "groupId").text + ":" + (dependency \ "artifactId").text -> formatProperty((dependency \ "version").text))
 
-    Logger.debug(s"springboot dependencyMap: $dependencyMap")
+    logger.debug(s"springboot dependencyMap: $dependencyMap")
 
     val properties = xmlFromString \ "properties" \ "_"
     val propertyMap = properties
       .map(property => property.label -> property.text)
       .toMap
 
-    Logger.debug(s"springboot propertyMap: $propertyMap")
+    logger.debug(s"springboot propertyMap: $propertyMap")
 
     SpringBootData(ListMap(dependencyMap: _*), propertyMap)
   }

@@ -21,6 +21,7 @@ abstract class AbstractParser {
   val extractProperties: ExtractGroups = matchData => matchData.group(1) -> matchData.group(2)
   val extractValue: ExtractGroups = matchData => "value" -> matchData.group(1)
   val extractArtifacts: ExtractGroups = matchData => (matchData.group(1) + ":" + matchData.group(2)).trim -> matchData.group(3)
+  private val logger = Logger(classOf[AbstractParser])
 
   def getBuildFile(repositoryPath: File): File
 
@@ -41,7 +42,7 @@ abstract class AbstractParser {
       )
     } catch {
       case _: IOException =>
-        Logger.debug(s"Cannot find ${file.getName}")
+        logger.debug(s"Cannot find ${file.getName}")
         Map.empty[String, String]
 
     }
