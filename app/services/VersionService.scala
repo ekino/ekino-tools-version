@@ -21,6 +21,7 @@ class VersionService @Inject()(
   private val config = Config(configuration)
   private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
   private val parsers = Seq(NPMRepositoryParser, SBTRepositoryParser, MavenRepositoryParser, GradleRepositoryParser)
+  private val logger = Logger(classOf[VersionService])
 
   @volatile private var data: RepositoryData = RepositoryData.noData
 
@@ -79,14 +80,14 @@ class VersionService @Inject()(
   def initData(): Unit = {
     val start = System.currentTimeMillis
     data = fetchRepositories()
-    Logger.info(s"data has been initialized in ${System.currentTimeMillis - start} ms")
+    logger.info(s"data has been initialized in ${System.currentTimeMillis - start} ms")
   }
 
   /**
     * Fetch repositories data as repository list, versions, dependencies ...
     */
   def fetchRepositories(): RepositoryData = {
-    Logger.info("Processing... this will take few seconds")
+    logger.info("Processing... this will take few seconds")
 
     val workspace: File = new File(config.filePath)
     if (!workspace.exists) {

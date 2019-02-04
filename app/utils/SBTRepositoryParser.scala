@@ -3,7 +3,7 @@ package utils
 import java.io.File
 
 import model.{Repository, SpringBootData}
-import play.Logger
+import play.api.Logger
 
 import scala.util.matching.Regex
 
@@ -18,6 +18,7 @@ object SBTRepositoryParser extends AbstractParser {
   val propertyRegex: Regex = """.*val (\w+) = \"([^ \n]+)\"(?! %)""".r
   val scalaVersionRegex: Regex = """.*scalaVersion (?:in ThisBuild )?:= \"?([^ ",\n]+).*""".r
   val scala2Regex: Regex = """(2.\d+).*""".r
+  private val logger = Logger(SBTRepositoryParser.getClass)
 
   override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     // project files
@@ -30,7 +31,7 @@ object SBTRepositoryParser extends AbstractParser {
     val scalaVersion = replaceVersionsHolder(extractFromFile(buildFile, scalaVersionRegex, extractValue), properties).getOrElse("value", "2.12.0")
     val shortScalaVersion = shortenScalaVersion(scalaVersion)
 
-    Logger.debug(s"scala version for $name is $scalaVersion")
+    logger.debug(s"scala version for $name is $scalaVersion")
 
     val artifacts = replaceVersionsHolder(extractedArtifacts ++ appendScalaVersion(scalaArtifacts, shortScalaVersion), properties)
 

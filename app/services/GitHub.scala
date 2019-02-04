@@ -13,6 +13,7 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
 
   private val linkHeaderField = "Link"
   private val lastPageLink = "rel=\"first\""
+  private val logger = Logger(classOf[GitHub])
 
   override def getRawGroups: Option[String] =
     getProperty("github.users")
@@ -46,10 +47,10 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
 
     val linkHeader = connection.getHeaderField(linkHeaderField)
 
-    Logger.debug(s"head : $linkHeader")
+    logger.debug(s"head : $linkHeader")
 
     if (linkHeader == null || linkHeader.contains(lastPageLink)) {
-      Logger.info(s"github repositories: $urls")
+      logger.info(s"github repositories: $urls")
       urls
     } else {
       fetchRepositoryUrls(user, page + 1, urls)

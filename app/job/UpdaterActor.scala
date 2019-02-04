@@ -12,6 +12,8 @@ import services.{GitRepositoryService, VersionService}
 @Singleton
 class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryService: GitRepositoryService) extends Actor {
 
+  private val logger = Logger(classOf[UpdaterActor])
+
   def receive: PartialFunction[Any, Unit] = {
     case InitMessage =>
       init()
@@ -22,7 +24,7 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
       update()
       sender() ! SuccessMessage
     case message  =>
-      Logger.error(s"Cannot process message: $message")
+      logger.error(s"Cannot process message: $message")
   }
 
   def init(): Unit = {
@@ -34,11 +36,11 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
   def update(): Unit = {
     val start = System.currentTimeMillis
 
-    Logger.info("Update Git Repositories")
+    logger.info("Update Git Repositories")
     gitRepositoryService.updateGitRepositories()
-    Logger.info("Update repositories cache")
+    logger.info("Update repositories cache")
     versionService.initData()
 
-    Logger.info("took " + (System.currentTimeMillis - start) + " ms to create cache")
+    logger.info("took " + (System.currentTimeMillis - start) + " ms to create cache")
   }
 }

@@ -21,6 +21,7 @@ object NpmVersionFetcher {
   val NPM_JSON = "application/vnd.npm.install-v1+json"
   val DIST_TAGS = "dist-tags"
   val LATEST = "latest"
+  private val logger = Logger(NpmVersionFetcher.getClass)
 
 
   // download npm metadata to get the latest version
@@ -47,14 +48,14 @@ object NpmVersionFetcher {
         .map(_.as[JsString].value)
         .getOrElse("")
 
-      Logger.info(s" resolved npm version $version for $name")
+      logger.info(s" resolved npm version $version for $name")
 
       (name, version)
 
     } catch {
       case _: FileNotFoundException => (name, "")
       case NonFatal(e) =>
-        Logger.error(s"Unexpected exception for $name", e)
+        logger.error(s"Unexpected exception for $name", e)
         (name, "")
     }
 

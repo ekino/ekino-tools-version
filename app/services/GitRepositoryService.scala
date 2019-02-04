@@ -20,6 +20,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
                                      gitHosts: Set[GitHost]) {
 
   private val projectUrl = "https?://[^ /]+/(.*)".r
+  private val logger = Logger(classOf[GitRepositoryService])
 
   /**
     * Update all the repositories.
@@ -45,7 +46,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     val repositoryUrl = repository.url
     projectUrl.findFirstMatchIn(repositoryUrl) match {
       case Some(value) => updateGitRepository(repository, value.group(1))
-      case _           => Logger.error(s"error with $repositoryUrl")
+      case _           => logger.error(s"error with $repositoryUrl")
     }
   }
 
@@ -68,7 +69,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     */
   private def pullRepository(repository: GitRepository, repositoryDirectory: File): Unit = {
     val repositoryUrl = repository.url
-    Logger.info(s"Pulling repository $repositoryUrl")
+    logger.info(s"Pulling repository $repositoryUrl")
 
     val git = new Git(new FileRepository(repositoryDirectory.getAbsolutePath + "/.git"))
 
@@ -79,11 +80,11 @@ class GitRepositoryService @Inject()(configuration: Configuration,
 
     try {
       command.call()
-      Logger.info(s"$repositoryUrl repository pulled")
+      logger.info(s"$repositoryUrl repository pulled")
     } catch {
       // empty repository
-      case _: RefNotAdvertisedException => Logger.warn(s"Skipping repository $repositoryUrl (empty repository)")
-      case e: Exception => Logger.error(s"Skipping repository $repositoryUrl", e)
+      case _: RefNotAdvertisedException => logger.warn(s"Skipping repository $repositoryUrl (empty repository)")
+      case e: Exception => logger.error(s"Skipping repository $repositoryUrl", e)
     }
   }
 
@@ -95,7 +96,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     */
   private def cloneRepository(repository: GitRepository, repositoryDirectory: File): Unit = {
     val repositoryUrl = repository.url
-    Logger.info(s"Cloning repository $repositoryUrl")
+    logger.info(s"Cloning repository $repositoryUrl")
 
     val cloneCommand = Git.cloneRepository
 
@@ -106,9 +107,9 @@ class GitRepositoryService @Inject()(configuration: Configuration,
 
     try {
       cloneCommand.call()
-      Logger.info(s"$repositoryUrl repository cloned")
+      logger.info(s"$repositoryUrl repository cloned")
     } catch {
-      case e: Exception => Logger.error(s"Skipping repository $repositoryUrl", e)
+      case e: Exception => logger.error(s"Skipping repository $repositoryUrl", e)
     }
   }
 

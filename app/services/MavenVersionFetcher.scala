@@ -19,6 +19,7 @@ import scala.xml.XML
 object MavenVersionFetcher {
 
   val pattern: Regex = "([^:]+):(.+)".r
+  private val logger = Logger(MavenVersionFetcher.getClass)
 
   // download maven-metadata to get the latest repository
   def getLatestVersion(name: String, site: Site): Future[(String, String)] = Future {
@@ -41,14 +42,14 @@ object MavenVersionFetcher {
       val html = Source.fromInputStream(connection.getInputStream)
       val xmlFromString = XML.loadString(html.mkString)
       val version = xmlFromString \\ "release" // XPATH to select release node
-      Logger.info("Resolved " + url + ":" + version.text)
+      logger.info("Resolved " + url + ":" + version.text)
 
       (name, version.text)
 
     } catch {
       case _: FileNotFoundException => (name, "")
       case NonFatal(e) =>
-        Logger.error(s"Unexpected exception for $name", e)
+        logger.error(s"Unexpected exception for $name", e)
         (name, "")
 
     }

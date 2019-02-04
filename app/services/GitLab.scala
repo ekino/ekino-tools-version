@@ -12,6 +12,7 @@ import scala.io.Source
 class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gitlab", configuration) {
 
   private val nextPageHeader = "X-Next-Page"
+  private val logger = Logger(classOf[GitLab])
 
   override def getRawGroups: Option[String] =
     getProperty("gitlab.group-ids")
@@ -46,7 +47,7 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     val urls = accumulator ++ pageUrls
 
     if (connection.getHeaderField(nextPageHeader).isEmpty) {
-      Logger.info(s"gitlab repositories: $urls")
+      logger.info(s"gitlab repositories: $urls")
       urls
     } else {
       fetchGitlabUrls(groupId, page + 1, urls)
