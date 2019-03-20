@@ -54,6 +54,18 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
   }
 
   @Test
+  def should_parse_simple_kotlin_style_dependencies() {
+    val prop = """  api("com.ekino.base:ekino-base-service:1.0.0")"""
+    val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
+
+    matchers should not be empty
+    matchers.group(1) shouldBe "com.ekino.base"
+    matchers.group(2) shouldBe "ekino-base-service"
+    matchers.group(3) shouldBe "1.0.0"
+
+  }
+
+  @Test
   def should_parse_kotlin_style_dependencies() {
     val prop = """  compile("com.ekino.base:ekino-base-service:" + property("ekino-base-service.version"))"""
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)

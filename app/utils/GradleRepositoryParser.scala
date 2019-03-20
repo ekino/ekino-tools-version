@@ -19,7 +19,7 @@ object GradleRepositoryParser extends AbstractParser {
   val gradleWrapperFileName = "gradle/wrapper/gradle-wrapper.properties"
 
   val artifactRegex: Regex = ("""\s*""" +
-    """(?:mavenBom|classpath|compile|compileOnly|testCompile|runtime|play|playTest|integrationTestCompile)""" +
+    """(?:mavenBom|classpath|compile|compileOnly|testCompile|runtime|play|playTest|integrationTestCompile|api|implementation|testImplementation|testRuntimeOnly|runtimeOnly)""" +
     """[\s(]*""" +
     """(?:group\s*[:=]\s*)?""" +
     """\(?['"]""" +
@@ -47,7 +47,7 @@ object GradleRepositoryParser extends AbstractParser {
     val settingsFile = new File(repositoryPath, settingsFileName)
     val gradleVersionFile = new File(repositoryPath, gradleWrapperFileName)
 
-    if (buildFile.exists && propertiesFile.exists) {
+    if (buildFile.exists) {
 
       val name = extractFromFile(settingsFile, projectNameRegex, extractValue).getOrElse("value", file.getName)
       logger.info(s"name $name")
