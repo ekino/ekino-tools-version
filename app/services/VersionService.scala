@@ -54,10 +54,10 @@ class VersionService @Inject()(
     * Get a single dependency to display.
     *
     * @param name the dependency name i.e. package:artifactName
-    * @return an option of the DisplayDependency
+    * @return an option of the AbstractDisplay
     */
-  def getDependency(name: String): Option[DisplayDependency] = {
-    data.dependencies.find(_.name == name)
+  def getDependency(name: String): Option[AbstractDisplay] = {
+    data.getPluginsAndDependencies.find(_.name == name)
   }
 
   /**
@@ -70,7 +70,7 @@ class VersionService @Inject()(
     data.plugins.find(_.pluginId == pluginId)
   }
 
-  def allDependencies(): Seq[DisplayDependency] = data.dependencies.sortBy(_.name)
+  def allDependencies(): Seq[AbstractDisplay] = data.getPluginsAndDependencies.sortBy(_.name)
 
   def noData: Boolean = data == RepositoryData.noData
 

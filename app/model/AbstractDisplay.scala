@@ -2,7 +2,9 @@ package model
 
 import utils.VersionComparator
 
-abstract class AbstractDisplay(name: String, version: String, versions: Map[String, Set[String]]) {
+abstract class AbstractDisplay(val name: String,
+                               val version: String,
+                               val versions: Map[String, Set[String]]) {
 
   def getRepositories(plugin: String): Seq[String] =
     versions
@@ -12,6 +14,13 @@ abstract class AbstractDisplay(name: String, version: String, versions: Map[Stri
 
   def sortByVersion(s1: String, s2: String): Boolean =
     VersionComparator.compare(s1, s2) >= 0
+
+  /**
+    * Calculates the number of uses of this dependency in all the projects.
+    *
+    * @return the count of the dependency usages
+    */
+  def numberOfUses(): Int = versions.values.flatten.size
 
   /**
     * Calculates the percentage of repositories up to date.
