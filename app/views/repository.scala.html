@@ -27,7 +27,7 @@
                     <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
                 </span>
             </form>
-            @if(repository.repository.versions.nonEmpty) {
+            @if(repository.repository.dependencies.nonEmpty) {
 
                 <table class="table table-bordered table-striped">
                     <caption>Dependencies</caption>
@@ -40,7 +40,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @for(version <- repository.repository.versions.keys.toSeq) {
+                    @for(version <- repository.repository.dependencies.map(_.name)) {
                         <tr>
                             <td class="@repository.springBootVersion(version, springBootData)">
                                 <span class="small-image"><img src="@routes.Assets.at("images/" + (if (utils.DependencyHelper.isWithPackage(version)) "java" else "nodejs") + ".svg")"></span>
@@ -76,7 +76,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @for(pluginId <- repository.repository.plugins.keys.toSeq) {
+                    @for(pluginId <- repository.repository.plugins.map(_.name)) {
                         <tr>
                             <td>
                                 <a href="@routes.PluginController.index(pluginId)" role="button">

@@ -3,7 +3,7 @@ package model
 import utils.VersionComparator
 
 abstract class AbstractDisplay(val name: String,
-                               val version: String,
+                               val latestVersion: String,
                                val versions: Map[String, Set[String]]) {
 
   def getRepositories(plugin: String): Seq[String] =
@@ -33,10 +33,17 @@ abstract class AbstractDisplay(val name: String,
     }
     val size = versions.values.flatten.size
     val count = versions
-      .filterKeys(VersionComparator.compare(_, version) >= 0)
+      .filterKeys(VersionComparator.compare(_, latestVersion) >= 0)
       .values.flatten.size
 
     val result = 100d * count / size
     result.toInt
   }
+
+  /**
+    * Specifies the path to the displayed icon in the assets.
+    * For instance for ''my-image.jpg'' found in ''public/images'',
+    * the method should return ''images/my-image.jpg''
+    */
+  def getIconPath: String
 }

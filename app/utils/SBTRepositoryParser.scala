@@ -2,7 +2,7 @@ package utils
 
 import java.io.File
 
-import model.{Repository, SpringBootData}
+import model.{JvmDependency, Plugin, Repository, SpringBootData}
 import play.api.Logger
 
 import scala.util.matching.Regex
@@ -34,8 +34,10 @@ object SBTRepositoryParser extends AbstractParser {
     logger.debug(s"scala version for $name is $scalaVersion")
 
     val artifacts = replaceVersionsHolder(extractedArtifacts ++ appendScalaVersion(scalaArtifacts, shortScalaVersion), properties)
+      .map(p => JvmDependency(p._1, p._2))
+      .toSeq
 
-    Some(Repository(name, groupName, artifacts, s"SBT with scala $scalaVersion", Map.empty[String, String]))
+    Some(Repository(name, groupName, artifacts, s"SBT with scala $scalaVersion", Seq.empty[Plugin]))
   }
 
   override def getBuildFile(repositoryPath: File): File = {

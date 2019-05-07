@@ -3,9 +3,8 @@ package model
 /**
   * Repository.
   */
-case class Repository(
-  name: String,
-  group: String,
-  versions: Map[String, String],
-  toolVersion: String,
-  plugins: Map[String, String])
+case class Repository(name: String,
+                      group: String,
+                      dependencies: Seq[Dependency],
+                      toolVersion: String,
+                      plugins: Seq[Plugin])

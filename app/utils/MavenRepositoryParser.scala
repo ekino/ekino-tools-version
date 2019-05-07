@@ -2,7 +2,7 @@ package utils
 
 import java.io.File
 
-import model.{Repository, SpringBootData}
+import model._
 
 import scala.util.matching.Regex
 
@@ -32,10 +32,16 @@ object MavenRepositoryParser extends AbstractParser {
     val mavenVersion = extractFromFile(new File(repositoryPath, mavenWrapperFileName), mavenVersionRegex, extractValue).getOrElse("value", "")
     val extractedPlugins = extractFromFile(buildFile, pluginRegex, extractArtifacts)
     val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
+      .map(p => JvmDependency(p._1, p._2))
+      .toSeq
     val plugins = replaceVersionsHolder(extractedPlugins, properties)
+      .map(p => MavenPlugin(p._1, p._2))
+      .toSeq
 
     val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
     val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
+      .map(p => JvmDependency(p._1, p._2))
+      .toSeq
 
     Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Maven $mavenVersion", plugins))
   }

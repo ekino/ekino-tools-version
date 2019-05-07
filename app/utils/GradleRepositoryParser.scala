@@ -2,7 +2,7 @@ package utils
 
 import java.io.File
 
-import model.{Repository, SpringBootData}
+import model.{GradlePlugin, JvmDependency, Repository, SpringBootData}
 import play.api.Logger
 
 import scala.util.matching.Regex
@@ -59,10 +59,16 @@ object GradleRepositoryParser extends AbstractParser {
 
       val gradleVersion = extractFromFile(gradleVersionFile, gradleVersionRegex, extractValue).getOrElse("value", "")
       val plugins = extractFromFile(buildFile, pluginRegex, extractProperties)
+        .map(p => GradlePlugin(p._1, p._2))
+        .toSeq
       val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
+        .map(p => JvmDependency(p._1, p._2))
+        .toSeq
       val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
       val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
-      Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Gradle $gradleVersion" , plugins))
+        .map(p => JvmDependency(p._1, p._2))
+        .toSeq
+      Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Gradle $gradleVersion", plugins))
     } else {
       // cannot process versions
       None
