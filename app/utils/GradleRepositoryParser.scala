@@ -29,7 +29,7 @@ object GradleRepositoryParser extends AbstractParser {
     """(?<artefactId>[_a-zA-Z0-9.-]+)""" +
     """(?:.*)(?:property\(['"]|\$\{?|:)""" +
     """(?<version>[_a-zA-Z0-9.-]+)""").r
-  val propertyRegex: Regex = """([^ =\n]*) *= *([^ \n]*)""".r
+  val propertyRegex: Regex = """([^ =\n]*) *= *"?([^ \n"]*)""".r
   val projectNameRegex: Regex = """rootProject.name ?= ?(?:'|")([0-9a-zA-Z\-]+)""".r
   val gradleVersionRegex: Regex = """.*gradle-([0-9.-]+)-.*""".r
   val pluginRegex: Regex = (
@@ -53,7 +53,10 @@ object GradleRepositoryParser extends AbstractParser {
       logger.info(s"name $name")
       val extractedArtifacts = extractFromFile(buildFile, artifactRegex, extractArtifacts)
       logger.debug(s"artifacts $extractedArtifacts")
-      val properties = extractFromFile(propertiesFile, propertyRegex, extractProperties)
+
+      val defaultProperties = extractFromFile(propertiesFile, propertyRegex, extractProperties)
+      val otherProperties = extractFromFile(buildFile, propertyRegex, extractProperties)
+      val properties = defaultProperties ++ otherProperties
 
       logger.debug(s"properties $properties")
 
