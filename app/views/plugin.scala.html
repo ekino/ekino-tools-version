@@ -13,13 +13,13 @@
     <body class="container">
         <div class="col-lg-12">
             <h1>
-                @plugin.pluginId
+                @plugin.name
                 @defining(plugin.getCompletionPercentage) { completionPercentage =>
                     <span data-color="@completionPercentage" class="pull-right label">@completionPercentage %</span>
                 }
             </h1>
             <h3>
-                <span>Latest release: </span> <span>@plugin.gradleVersion</span>
+                <span>Latest release: </span> <span>@plugin.latestVersion</span>
             </h3>
             <div class="pull-right return-block">
                 <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>

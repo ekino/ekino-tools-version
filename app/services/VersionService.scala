@@ -11,10 +11,9 @@ import utils._
   * Main versions service.
   */
 @Singleton
-class VersionService @Inject()(
-  configuration: Configuration,
-  gitRepositoryService: GitRepositoryService,
-  springBootVersionService: SpringBootVersionService) {
+class VersionService @Inject()(configuration: Configuration,
+                               gitRepositoryService: GitRepositoryService,
+                               springBootVersionService: SpringBootVersionService) {
 
   val springBootDefaultData: SpringBootData = springBootVersionService.computeSpringBootData(false)
 
@@ -54,10 +53,10 @@ class VersionService @Inject()(
     * Get a single dependency to display.
     *
     * @param name the dependency name i.e. package:artifactName
-    * @return an option of the DisplayDependency
+    * @return an option of the AbstractDisplay
     */
-  def getDependency(name: String): Option[DisplayDependency] = {
-    data.dependencies.find(_.name == name)
+  def getDependency(name: String): Option[AbstractDisplay] = {
+    data.getPluginsAndDependencies.find(_.name == name)
   }
 
   /**
@@ -67,10 +66,10 @@ class VersionService @Inject()(
     * @return the DisplayPlugin or a new one if not found
     */
   def getPlugin(pluginId: String): Option[DisplayPlugin] = {
-    data.plugins.find(_.pluginId == pluginId)
+    data.plugins.find(_.name == pluginId)
   }
 
-  def allDependencies(): Seq[DisplayDependency] = data.dependencies.sortBy(_.name)
+  def allDependencies(): Seq[AbstractDisplay] = data.getPluginsAndDependencies.sortBy(_.name)
 
   def noData: Boolean = data == RepositoryData.noData
 
@@ -127,11 +126,11 @@ class VersionService @Inject()(
       .reduceOption((r1, r2) => Repository(
         r1.name,
         r1.group,
-        r1.versions ++ r2.versions,
+        r1.dependencies ++ r2.dependencies,
         r1.toolVersion + "/" + r2.toolVersion,
         r1.plugins ++ r2.plugins
       ))
-      .filter(repo => repo.versions.nonEmpty || repo.plugins.nonEmpty)
+      .filter(repo => repo.dependencies.nonEmpty || repo.plugins.nonEmpty)
   }
 
   /**
@@ -140,8 +139,8 @@ class VersionService @Inject()(
   private def computePluginVersions(repositories: Seq[Repository]): (Map[String, String], Map[String, String]) = {
     val plugins = repositories
       .flatMap(_.plugins)
-      .groupBy(_._1)
-      .mapValues(seq => seq.map(_._2).max(VersionComparator))
+      .groupBy(_.name)
+      .mapValues(seq => seq.map(_.version).max(VersionComparator))
 
     val localPluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenLocalPlugins))
     val gradlePluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenGradlePlugins))
@@ -176,9 +175,9 @@ class VersionService @Inject()(
     */
   private def computeDependencyVersions(repositories: Seq[Repository]): (Map[String, String], Map[String, String]) = {
     val dependencies = repositories
-      .flatMap(_.versions)
-      .groupBy(_._1)
-      .mapValues(seq => seq.map(_._2).max(VersionComparator))
+      .flatMap(_.dependencies)
+      .groupBy(_.name)
+      .mapValues(seq => seq.map(_.version).max(VersionComparator))
 
     val localDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenLocal))
     val centralDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenCentral))
@@ -196,14 +195,13 @@ class VersionService @Inject()(
     */
   private def computePlugins(repositories: Seq[Repository], localPlugins: Map[String, String]): Seq[DisplayPlugin] = {
     repositories
-      .flatMap(repo => repo.plugins.map(p => (p._1, p._2, repo.name)))
-      .groupBy(_._1)                                                    // groupBy dependency name
-      .mapValues(_.groupBy(_._2))                                       // groupBy dependency version
-      .map(p =>
-        DisplayPlugin(
-          p._1,
-          localPlugins.getOrElse(p._1, ""),
-          p._2.mapValues(_.map(_._3).toSet)))
+      .flatMap(repo => repo.plugins.map((_, repo.name)))                    // Extract all the (plugin, project name) tuples
+      .groupBy(_._1.name)                                                   // Group by name
+      .mapValues(_.groupBy(_._1.version))                                   // Group by version
+      .map(p => DisplayPlugin.from(                                         // Create a DisplayPlugin with:
+        repositories.flatMap(_.plugins).find(_.name == p._1).orNull,        // - the plugin name
+        localPlugins.getOrElse(p._1, ""),                                   // - its latest released version
+        p._2.mapValues(_.map(_._2).toSet)))                                 // - all the projects using it by version
       .toSeq
   }
 
@@ -212,15 +210,13 @@ class VersionService @Inject()(
     */
   private def computeDependencies(repositories: Seq[Repository], centralDependencies: Map[String, String]): Seq[DisplayDependency] = {
     repositories
-      .flatMap(repo => repo.versions.map(v => (v._1, v._2, repo.name))) // extract all the (dependency, version, project name) tuples
-      .groupBy(_._1)                                                    // groupBy dependency name
-      .mapValues(_.groupBy(_._2))                                       // groupBy dependency version
-      .map(d =>
-        DisplayDependency(                                              // create a DisplayDependency with the dependency name
-          d._1,                                                         // and all the projects using it by version
-          centralDependencies.getOrElse(d._1, ""),
-          d._2.mapValues(_.map(_._3).toSet)))
+      .flatMap(repo => repo.dependencies.map((_, repo.name)))                     // Extract all the (dependency, project name) tuples
+      .groupBy(_._1.name)                                                         // Group by dependency name
+      .mapValues(_.groupBy(_._1.version))                                         // Group by dependency version
+      .map(d => DisplayDependency.from(                                           // Create a DisplayDependency with:
+        repositories.flatMap(_.dependencies).find(_.name == d._1).orNull,         // - the dependency name
+        centralDependencies.getOrElse(d._1, ""),                                  // - its latest released version
+        d._2.mapValues(_.map(_._2).toSet)))                                       // - all the projects using it by version
       .toSeq
   }
-
 }

@@ -1,5 +1,5 @@
-@import model.DisplayDependency
-@(dependencies: Seq[DisplayDependency])
+@import model.AbstractDisplay
+@(dependencies: Seq[AbstractDisplay])
 
 <!DOCTYPE html>
 
@@ -24,7 +24,7 @@
                 <div id="search-list" class="versions list-group control-group accordion">
                     @for(dependency <- dependencies) {
                         <a href="@routes.DependencyController.dependency(dependency.name)" class="list-group-item repository dependency">
-                            <span class="small-image"><img src="@routes.Assets.at("images/" + (if (utils.DependencyHelper.isWithPackage(dependency.name)) "java" else "nodejs") + ".svg")"></span>
+                            <span class="small-image"><img src="@routes.Assets.at(dependency.getIconPath)"></span>
                             <span class="name">
                                 @dependency.name
                             </span>
@@ -41,4 +41,3 @@
         <script src="@routes.Assets.at("javascripts/versions.js")"></script>
     </body>
 </html>
-

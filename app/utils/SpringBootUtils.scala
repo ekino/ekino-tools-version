@@ -1,6 +1,6 @@
 package utils
 
-import model.SpringBootData
+import model.{Plugin, SpringBootData, Dependency}
 
 import scala.collection.immutable.ListMap
 
@@ -9,10 +9,10 @@ import scala.collection.immutable.ListMap
   */
 object SpringBootUtils {
 
-  def getSpringBootOverrides(artifacts: Map[String, String], properties: Map[String, String], springBootData: SpringBootData): Map[String, String] = {
+  def getSpringBootOverrides(artifacts: Seq[Dependency], properties: Map[String, String], springBootData: SpringBootData): Map[String, String] = {
     val result = ListMap.newBuilder[String, String]
     properties
-      .filter(p => !artifacts.exists(_._2 == p._1))
+      .filter(p => !artifacts.exists(_.version == p._1))
       .filter(p => springBootData.properties.exists(_._1 == p._1))
       .foreach(p => {
         val maybeTuple = springBootData.artefacts
@@ -25,9 +25,10 @@ object SpringBootUtils {
     result.result()
   }
 
-  def getSpringBootData(plugins: Map[String, String], springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): SpringBootData = {
-    plugins.get("org.springframework.boot")
-      .filter(_.startsWith("1."))
+  def getSpringBootData(plugins: Seq[Plugin], springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): SpringBootData = {
+    plugins
+      .find(_.name.contains("org.springframework.boot"))
+      .filter(_.name.startsWith("1."))
       .map(_ => springBootDefaultData)
       .getOrElse(springBootMasterData)
   }

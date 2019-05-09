@@ -2,7 +2,7 @@ package utils
 
 import java.io.File
 
-import model.{Repository, SpringBootData}
+import model._
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 
 import scala.io.Source
@@ -27,9 +27,13 @@ object NPMRepositoryParser extends AbstractParser {
       .getOrElse(file.getName)
 
     val devDependencies = extractDependencies(jsonValues.get("devDependencies"))
+      .map(p => NodeDependency(p._1, p._2))
+      .toSeq
     val dependencies = extractDependencies(jsonValues.get("dependencies"))
+      .map(p => NodeDependency(p._1, p._2))
+      .toSeq
 
-    Some(Repository(name, groupName, dependencies ++ devDependencies, "NPM", Map.empty[String, String]))
+    Some(Repository(name, groupName, dependencies ++ devDependencies, "NPM", Seq.empty[Plugin]))
   }
 
   override def getBuildFile(repositoryPath: File): File = new File(repositoryPath, buildFileName)

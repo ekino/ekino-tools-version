@@ -1,15 +1,37 @@
 package model
 
 /**
-  * Dependency DTO.
+  * A dependency displayed in the view.
   */
-case class DisplayDependency(name: String, centralVersion: String, versions: Map[String, Set[String]])
-  extends AbstractDisplay(name, centralVersion, versions) {
+abstract class DisplayDependency(override val name: String,
+                                 override val latestVersion: String,
+                                 override val versions: Map[String, Set[String]])
+  extends AbstractDisplay(name, latestVersion, versions)
 
-  /**
-    * Calculates the number of uses of this dependency in all the projects.
-    *
-    * @return the count of the dependency usages
-    */
-  def numberOfUses(): Int = versions.values.flatten.size
+object DisplayDependency {
+
+  def from(version: Dependency,
+           latestVersion: String,
+           versions: Map[String, Set[String]]): DisplayDependency = {
+    version match {
+      case _: JvmDependency => DisplayJavaDependency(version.name, latestVersion, versions)
+      case _: NodeDependency => DisplayNpmDependency(version.name, latestVersion, versions)
+    }
+  }
+}
+
+case class DisplayJavaDependency(override val name: String,
+                                 override val latestVersion: String,
+                                 override val versions: Map[String, Set[String]])
+  extends DisplayDependency(name, latestVersion, versions) {
+
+  override def getIconPath: String = "images/java.svg"
+}
+
+case class DisplayNpmDependency(override val name: String,
+                                override val latestVersion: String,
+                                override val versions: Map[String, Set[String]])
+  extends DisplayDependency(name, latestVersion, versions) {
+
+  override def getIconPath: String = "images/nodejs.svg"
 }

@@ -1,5 +1,5 @@
-@import model.DisplayDependency
-@(dependency: DisplayDependency)
+@import model.AbstractDisplay
+@(dependency: AbstractDisplay)
 
 <!DOCTYPE html>
 
@@ -19,7 +19,7 @@
                 }
             </h1>
             <h3>
-                <span>Latest release: </span> <span>@dependency.centralVersion</span>
+                <span>Latest release: </span> <span>@dependency.latestVersion</span>
             </h3>
             <div class="pull-right return-block">
                 <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
@@ -50,4 +50,3 @@
         <script src="@routes.Assets.at("javascripts/versions.js")"></script>
     </body>
 </html>
-

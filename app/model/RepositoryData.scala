@@ -11,7 +11,12 @@ case class RepositoryData(
   centralDependencies: Map[String, String],
   localPlugins: Map[String, String],
   gradlePlugins: Map[String, String]
-)
+) {
+
+  def getPluginsAndDependencies: Seq[AbstractDisplay] = {
+    dependencies ++ plugins
+  }
+}
 
 object RepositoryData {
   def noData = RepositoryData(

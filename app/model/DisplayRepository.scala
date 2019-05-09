@@ -59,10 +59,10 @@ case class DisplayRepository(
     VersionComparator.compare(version, reference) >= 0
   }
 
-  def getDependencyVersion(dependency: String): String = repository.versions.getOrElse(dependency, "")
+  def getDependencyVersion(dependency: String): String = repository.dependencies.find(_.name.equals(dependency)).map(_.version).getOrElse("")
   def getLocalDependencyVersion(dependency: String): String = localDependencies.getOrElse(dependency, "")
   def getCentralDependencyVersion(dependency: String): String = centralDependencies.getOrElse(dependency, "")
-  def getPluginVersion(pluginId: String): String = repository.plugins.getOrElse(pluginId, "")
+  def getPluginVersion(pluginId: String): String = repository.plugins.find(_.name.equals(pluginId)).map(_.version).getOrElse("")
   def getLocalPluginVersion(pluginId: String): String = localPlugins.getOrElse(pluginId, "")
   def getGradlePluginVersion(pluginId: String): String = gradlePlugins.getOrElse(pluginId, "")
   def project: String = repository.group
@@ -87,18 +87,18 @@ case class DisplayRepository(
     * @return the percentage of dependencies up to date
     */
   private[this] def calculateCompletionPercentage(): Integer = {
-    val size = repository.versions.size + repository.plugins.size
+    val size = repository.dependencies.size + repository.plugins.size
     if (size == 0) {
       return 100
     }
     val countVersion = repository
-      .versions
-      .count(p => isVersionUpToDate(p._1))
+      .dependencies
+      .count(p => isVersionUpToDate(p.name))
       .asInstanceOf[Double]
 
     val countPlugin = repository
       .plugins
-      .count(p => isPluginUpToDate(p._1))
+      .count(p => isPluginUpToDate(p.name))
       .asInstanceOf[Double]
 
     val result = 100 * ((countVersion + countPlugin) / size)
