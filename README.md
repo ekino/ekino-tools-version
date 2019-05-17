@@ -19,15 +19,6 @@ It provides 5 views:
 
 JDK 8 is required.
 
-## IDE
-
-The IntelliJ integration is not automatic.
-A Scala SDK needs to be added to the project.
-This Gradle command has to be launched manually:
-```
-$ ./gradlew idea
-```
-
 ## Run
 
 ### Run in dev mode
@@ -57,8 +48,8 @@ Test the application on url http://localhost:9000/
 ### Run in binary mode
 ```bash
 $ ./gradlew build
-$ unzip build/distributions/playBinary.zip -d build/distributions
-$ ./build/distributions/playBinary/bin/playBinary
+$ unzip build/distributions/ekino-tools-version.zip -d build/distributions
+$ ./build/distributions/ekino-tools-version/bin/main
 ```
 Test the application on url http://localhost:9000/
 
