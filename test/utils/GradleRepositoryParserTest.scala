@@ -110,6 +110,19 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
   }
 
   @Test
+  def should_parse_plugins_with_property() {
+    val prop =
+      """ val baseVersion = "1.2.3"
+        | id 'com.ekino.base'   version baseVersion
+      """.stripMargin
+    val matchers = GradleRepositoryParser.pluginRegex.findAllIn(prop)
+
+    matchers should not be empty
+    matchers.group(1) shouldBe "com.ekino.base"
+    matchers.group(2) shouldBe "baseVersion"
+  }
+
+  @Test
   def should_parse_plugins_with_kotlin_script_without_space_after_id() {
     val prop = """ id("com.ekino.base")     version "1.2.0" """
     val matchers = GradleRepositoryParser.pluginRegex.findAllIn(prop)

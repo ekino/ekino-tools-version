@@ -36,7 +36,7 @@ object GradleRepositoryParser extends AbstractParser {
     """\s*id\s*\(?""" +
     """['"]([_a-zA-Z0-9.-]+)['"]\)?""" +
     """\s*version\s+""" +
-    """['"]([_a-zA-Z0-9.-]+)['"]""").r
+    """['"]?([_a-zA-Z0-9.-]+)['"]?""").r
   private val logger = Logger(GradleRepositoryParser.getClass)
 
   override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
@@ -61,7 +61,7 @@ object GradleRepositoryParser extends AbstractParser {
       logger.debug(s"properties $properties")
 
       val gradleVersion = extractFromFile(gradleVersionFile, gradleVersionRegex, extractValue).getOrElse("value", "")
-      val plugins = extractFromFile(buildFile, pluginRegex, extractProperties)
+      val plugins = replaceVersionsHolder(extractFromFile(buildFile, pluginRegex, extractProperties), properties)
         .map(p => GradlePlugin(p._1, p._2))
         .toSeq
       val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
