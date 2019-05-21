@@ -1,4 +1,4 @@
-FROM openjdk:8u131-jre-alpine
+FROM adoptopenjdk/openjdk8:jre8u212-b03
 MAINTAINER ekino
 ADD build/distributions/ekino-tools-version.tar /play/
 EXPOSE 8080
