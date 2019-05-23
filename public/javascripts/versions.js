@@ -7,9 +7,16 @@ const hslColorPercent = (percent, start, end) => {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.label[data-color]').forEach(item => {
+    document.querySelectorAll('.badge[data-color]').forEach(item => {
         const percent = item.getAttribute('data-color');
         item.style.backgroundColor = hslColorPercent(percent, 0, 120);
+
+        // in order to keep a high contrast
+        if (percent > 30) {
+            item.style.color = '#343a40'
+        } else {
+            item.style.color = '#ffffff'
+        }
     });
 
     const searchInput = document.getElementById('search-input');

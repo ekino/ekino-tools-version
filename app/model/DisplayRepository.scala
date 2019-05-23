@@ -75,7 +75,6 @@ case class DisplayRepository(
     case r".*library.*" => "library"
     case r".*tool.*" => "tool"
     case r".*service.*" => "service"
-    case r".*spring.*" => "spring"
     case r".*lambda.*" => "cloud"
     case r".*-gradle-.*" => "plug"
     case _ => "default"

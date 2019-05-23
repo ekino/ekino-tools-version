@@ -6,94 +6,105 @@
 
 <html lang="en">
     <head>
+        <meta charset="UTF-8">
         <title>Repository versions</title>
         <link rel="icon" href='@routes.Assets.at("images/favicon.png")' >
         <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
         <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
     </head>
     <body class="container">
-        <div class="col-lg-12">
-            <h1 class="repository @repository.repositoryType">
-                @repository.name
-                <span data-color="@repository.completionPercentage" class="pull-right label">
-                    @repository.completionPercentage %
-                </span>
-            </h1>
-            <form class="form-inline">
-                <h3 class="form-group">
-                    <span>@repository.repository.toolVersion</span>
-                </h3>
-                <span class="pull-right return-block">
+        <div class="row mt-3">
+            <div class="col">
+                <h1 class="repository @repository.repositoryType">
+                    @repository.name
+                    <span data-color="@repository.completionPercentage" class="float-right badge">
+                        @repository.completionPercentage %
+                    </span>
+                </h1>
+            </div>
+        </div>
+
+        <div class="row justify-content-between mb-3 mt-2">
+            <div class="col-6">
+                <h4>@repository.repository.toolVersion</h4>
+            </div>
+            <div class="col-6">
+                <span class="float-right">
                     <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
                 </span>
-            </form>
-            @if(repository.repository.dependencies.nonEmpty) {
+            </div>
+        </div>
 
-                <table class="table table-bordered table-striped">
-                    <caption>Dependencies</caption>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Current version</th>
-                            <th>Latest version used</th>
-                            <th>Latest release</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @for(version <- repository.repository.dependencies.map(_.name)) {
-                        <tr>
-                            <td class="@repository.springBootVersion(version, springBootData)">
-                                <span class="small-image"><img src="@routes.Assets.at("images/" + (if (utils.DependencyHelper.isWithPackage(version)) "java" else "nodejs") + ".svg")"></span>
-                                <a href="@routes.DependencyController.dependency(version)" role="button">
-                                    <span>@version</span>
-                                </a>
-                                @if(repository.springBootVersion(version, springBootData) != "") {
-                                    <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(version, springBootData) + ".svg")"></span>
-                                }
-                                @if(repository.isVersionUpToDate(version)) {
-                                    <span class="pull-right glyphicon glyphicon-ok" ></span>
-                                }
-                            </td>
-                            <td>@repository.getDependencyVersion(version)</td>
-                            <td>@repository.getLocalDependencyVersion(version)</td>
-                            <td>@repository.getCentralDependencyVersion(version)</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            }
-            <br/>
-            @if(repository.repository.plugins.nonEmpty) {
+        <div class="row">
+            <div class="col">
+                @if(repository.repository.dependencies.nonEmpty) {
 
-                <table class="table table-bordered table-striped">
-                    <caption>Plugins</caption>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Current version</th>
-                            <th>Latest version used</th>
-                            <th>Latest release</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @for(pluginId <- repository.repository.plugins.map(_.name)) {
-                        <tr>
-                            <td>
-                                <a href="@routes.PluginController.index(pluginId)" role="button">
-                                    <span>@pluginId</span>
-                                </a>
-                                @if(repository.isPluginUpToDate(pluginId)) {
-                                    <span class="pull-right glyphicon glyphicon-ok" ></span>
-                                }
-                            </td>
-                            <td>@repository.getPluginVersion(pluginId)</td>
-                            <td>@repository.getLocalPluginVersion(pluginId)</td>
-                            <td>@repository.getGradlePluginVersion(pluginId)</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            }
+                    <h4>Dependencies</h4>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Current version</th>
+                                <th>Latest version used</th>
+                                <th>Latest release</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @for(version <- repository.repository.dependencies.map(_.name)) {
+                            <tr>
+                                <td class="@repository.springBootVersion(version, springBootData)">
+                                    <span class="small-image"><img src="@routes.Assets.at("images/" + (if (utils.DependencyHelper.isWithPackage(version)) "java" else "nodejs") + ".svg")"></span>
+                                    <a href="@routes.DependencyController.dependency(version)" role="button">
+                                        <span>@version</span>
+                                    </a>
+                                    @if(repository.springBootVersion(version, springBootData) != "") {
+                                        <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(version, springBootData) + ".svg")"></span>
+                                    }
+                                    @if(repository.isVersionUpToDate(version)) {
+                                        <span class="badge badge-pill badge-success badge-table float-right">OK</span>
+                                    }
+                                </td>
+                                <td>@repository.getDependencyVersion(version)</td>
+                                <td>@repository.getLocalDependencyVersion(version)</td>
+                                <td>@repository.getCentralDependencyVersion(version)</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+                <br/>
+                @if(repository.repository.plugins.nonEmpty) {
+
+                    <h4>Plugins</h4>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Current version</th>
+                                <th>Latest version used</th>
+                                <th>Latest release</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @for(pluginId <- repository.repository.plugins.map(_.name)) {
+                            <tr>
+                                <td>
+                                    <a href="@routes.PluginController.index(pluginId)" role="button">
+                                        <span>@pluginId</span>
+                                    </a>
+                                    @if(repository.isPluginUpToDate(pluginId)) {
+                                        <span class="badge badge-pill badge-success badge-table float-right">OK</span>
+                                    }
+                                </td>
+                                <td>@repository.getPluginVersion(pluginId)</td>
+                                <td>@repository.getLocalPluginVersion(pluginId)</td>
+                                <td>@repository.getGradlePluginVersion(pluginId)</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
         </div>
         <script src="@routes.Assets.at("javascripts/versions.js")"></script>
     </body>
