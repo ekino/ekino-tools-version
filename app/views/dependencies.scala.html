@@ -5,31 +5,38 @@
 
 <html lang="en">
     <head>
-        <title>Dependency list</title>
+        <meta charset="UTF-8">
+        <title>Dependencies list</title>
         <link rel="icon" href='@routes.Assets.at("images/favicon.png")' >
         <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
         <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
     </head>
     <body class="container">
-        <div class="col-md-12">
-            <div class="pull-right return-block">
-                <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
-            </div>
-            <div>
+        <div class="row mt-3 mb-3">
+            <div class="col-6">
                 <form class="form-inline" autocomplete="off">
                     <div class="form-group">
                         <input id="search-input" class="form-control" type="search" placeholder="Search..." />
                     </div>
                 </form>
+            </div>
+
+            <div class="col-6">
+                <a class="btn btn-primary float-right" href="@routes.HomeController.index()" role="button">Return to home</a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
                 <div id="search-list" class="versions list-group control-group accordion">
                     @for(dependency <- dependencies) {
-                        <a href="@routes.DependencyController.dependency(dependency.name)" class="list-group-item repository dependency">
-                            <span class="small-image"><img src="@routes.Assets.at(dependency.getIconPath)"></span>
+                        <a href="@routes.DependencyController.dependency(dependency.name)" class="list-group-item list-group-item-action repository dependency">
+                            <span class="small-image"><img src="@routes.Assets.at(dependency.getIconPath)" alt="image"></span>
                             <span class="name">
                                 @dependency.name
                             </span>
                             @defining(dependency.numberOfUses) { uses: Int =>
-                                <span class="pull-right label col-sm-3">
+                                <span class="float-right badge badge-info">
                                     @uses @(if (uses > 1) "uses" else "use")
                                 </span>
                             }

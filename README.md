@@ -41,7 +41,7 @@ First, you have to add a set of env variables:
 
 Then run the application with Gradle
 ```
-./gradlew -t runPlayBinary
+./gradlew -t runPlay
 ```
 Test the application on url http://localhost:9000/
 

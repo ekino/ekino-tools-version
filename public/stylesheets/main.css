@@ -2,70 +2,37 @@
 
 body {
     font-family: 'Open Sans', sans-serif;
-    background-color: #EEEEEE;
-}
-
-h1, h2, h3, h4 {
-    font-weight: 300;
-}
-
-form {
-    margin-bottom: 2%;
-}
-
-tr {
-    background-color: #F4F4F4;
-}
-
-.return-block {
-    margin-bottom: 2%;
-}
-
-.container {
-    font-size: large;
-}
-
-.repository:before {
-    font-family: "Glyphicons Halflings", sans-serif;
-    margin-right: 8px;
 }
 
 .repository span {
-    font-size: x-large;
+    font-size: 1.4rem;
 }
 
-.repository.dependency span {
-    font-size: medium;
+.badge-table {
+    font-size: 1rem;
 }
 
-.dependency.dependency span.label {
-    background-color: #75caeb
+.navbar-ekino {
+    background-color: #e3f2fd;
 }
 
 .library:before {
-    content: "\e043";
+    content: "\1F4D5";
 }
 .default:before {
-    content: "\e118";
+    content: "\1F4C1";
 }
 .service:before {
-    content: "\e135";
+    content: "\1F3ED";
 }
 .tool:before {
-    content: "\e136";
-}
-.spring:before {
-    content: "\e103";
+    content: "\1F527";
 }
 .cloud:before {
     content: "\2601";
 }
 .plug:before {
-    content: "\e019";
-}
-
-.label {
-    color: #555555;
+    content: "\1F3D7";
 }
 
 .small-image img {

@@ -5,50 +5,55 @@
 
 <html lang="en">
     <head>
+        <meta charset="UTF-8">
         <title>Repositories</title>
         <link rel="icon" href='@routes.Assets.at("images/favicon.png")' >
         <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
         <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
     </head>
-    <body class="container">
-        <nav class="navbar navbar-default">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <a class="navbar-brand">Projects</a>
-                </div>
-                <ul class="nav navbar-nav">
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light navbar-ekino sticky-top">
+            <div class="container">
+                <a class="navbar-brand">Projects</a>
+                <ul class="navbar-nav">
                     @for(project <- projects) {
-                        <li class="nav-item" id="nav@project.name"><a href="javascript:;" onclick="activateTab('@project.name')">@project.name</a></li>
+                        <li class="nav-item" id="nav@project.name">
+                            <a class="nav-link" href="javascript:" onclick="activateTab('@project.name')">@project.name</a>
+                        </li>
                     }
                 </ul>
-                <a href="@routes.DependencyController.dependencies()">
-                    <button class="btn navbar-brand navbar-right">Dependencies</button>
-                </a>
+                <a class="btn btn-outline-primary" href="@routes.DependencyController.dependencies()">All dependencies</a>
             </div>
         </nav>
-        <div class="col-md-12">
-            <div>
-                <form class="form-inline" autocomplete="off">
-                    <div class="form-group">
+        <div class="container">
+            <div class="row mt-3 mb-3">
+                <div class="col-6">
+                    <form class="form-inline" autocomplete="off">
                         <input id="search-input" class="form-control" type="search" placeholder="Search..." />
+                    </form>
+                </div>
+
+                <div class="col-6">
+                    <a class="btn btn-danger btn-sm float-right" href="@routes.HomeController.clearCache()">Clear cache</a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div id="search-list" class="versions list-group control-group accordion">
+                        @for(project <- projects) {
+                            <div class="tabcontent" id="tab@project.name">
+                                @for(repository <- project.repositories) {
+                                    <a href="@routes.RepositoryController.index(repository.name)" class="list-group-item list-group-item-action repository @repository.repositoryType">
+                                        <span class="name">@repository.name</span>
+                                        <span data-color="@repository.completionPercentage" class="badge float-right col-2">
+                                            @repository.completionPercentage %
+                                        </span>
+                                    </a>
+                                }
+                            </div>
+                        }
                     </div>
-                    <a class="btn btn-danger pull-right" type="button" href="@routes.HomeController.clearCache()" role="button">
-                        Clear cache
-                    </a>
-                </form>
-                <div id="search-list" class="versions list-group control-group accordion">
-                    @for(project <- projects) {
-                        <div class="tabcontent" id="tab@project.name">
-                            @for(repository <- project.repositories) {
-                                <a href="@routes.RepositoryController.index(repository.name)" class="list-group-item repository @repository.repositoryType">
-                                    <span class="name">@repository.name</span>
-                                    <span data-color="@repository.completionPercentage" class="pull-right label col-sm-3">
-                                        @repository.completionPercentage %
-                                    </span>
-                                </a>
-                            }
-                        </div>
-                    }
                 </div>
             </div>
         </div>
