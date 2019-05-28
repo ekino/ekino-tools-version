@@ -16,6 +16,11 @@ body {
     background-color: #e3f2fd;
 }
 
+/* Line under active nav item */
+.active {
+    border-bottom: .15rem solid var(--dark);
+}
+
 .library:before {
     content: "\1F4D5";
 }
