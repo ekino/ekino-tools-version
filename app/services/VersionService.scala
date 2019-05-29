@@ -16,9 +16,9 @@ class VersionService @Inject()(configuration: Configuration,
                                springBootVersionService: SpringBootVersionService) {
 
   val springBootDefaultData: SpringBootData = springBootVersionService.computeSpringBootData(false)
+  val springBootMasterData: SpringBootData = springBootVersionService.computeSpringBootData(true)
 
   private val config = Config(configuration)
-  private val springBootMasterData = springBootVersionService.computeSpringBootData(true)
   private val parsers = Seq(NPMRepositoryParser, SBTRepositoryParser, MavenRepositoryParser, GradleRepositoryParser)
   private val logger = Logger(classOf[VersionService])
 
