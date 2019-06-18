@@ -29,6 +29,8 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:${property("slf4j-simple.version")}")
     implementation("org.eclipse.jgit:org.eclipse.jgit:${property("org.eclipse.jgit.version")}")
     implementation("com.typesafe.play:play-guice_2.12:${property("play.version")}")
+    implementation("com.typesafe.play:filters-helpers_2.12:${property("play.version")}")
     implementation("net.codingwell:scala-guice_2.12:${property("scala-guice.version")}")
+
     testImplementation("org.scalatestplus.play:scalatestplus-play_2.12:${property("scalatestplus-play_2.12.version")}")
 }

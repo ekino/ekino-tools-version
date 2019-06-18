@@ -12,6 +12,7 @@ gradleProperties := {
 }
 
 libraryDependencies += guice
+libraryDependencies += filters
 libraryDependencies += "org.eclipse.jgit"        % "org.eclipse.jgit"   % gradleProperties.value.getProperty("org.eclipse.jgit.version")
 libraryDependencies += "net.codingwell"         %% "scala-guice"        % gradleProperties.value.getProperty("scala-guice.version")
 
