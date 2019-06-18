@@ -34,7 +34,7 @@ abstract class AbstractParser {
   protected def extractFromFile(file: File, regex: Regex, extract: ExtractGroups): Map[String, String] = {
     try {
       // Seek all results matching regex and converting it to a map
-      val content = Source.fromFile(file).mkString
+      val content = getFileAsString(file)
       ListMap(regex.findAllIn(content)
         .matchData
         .map(extract)
@@ -54,5 +54,12 @@ abstract class AbstractParser {
     ListMap(artifacts
       .toSeq
       .map(p => if (properties.get(p._2).isDefined) p._1 -> properties(p._2) else p): _*)
+  }
+
+  def getFileAsString(file: File): String = {
+    val sourceFile = Source.fromFile(file)
+    val content = sourceFile.mkString
+    sourceFile.close()
+    content
   }
 }

@@ -50,23 +50,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                        @for(version <- repository.repository.dependencies.map(_.name)) {
+                        @for(dependency <- repository.repository.dependencies) {
                             <tr>
-                                <td class="@repository.springBootVersion(version, springBootData)">
-                                    <span class="small-image"><img src="@routes.Assets.at("images/" + (if (utils.DependencyHelper.isWithPackage(version)) "java" else "nodejs") + ".svg")"></span>
-                                    <a href="@routes.DependencyController.dependency(version)" role="button">
-                                        <span>@version</span>
+                                <td class="@repository.springBootVersion(dependency.name, springBootData)">
+                                    <span class="small-image"><img src="@routes.Assets.at(utils.ImageHelper.getIconPath(dependency.getType))" alt="image"></span>
+                                    <a href="@routes.DependencyController.dependency(dependency.name)" role="button">
+                                        <span>@dependency.name</span>
                                     </a>
-                                    @if(repository.springBootVersion(version, springBootData) != "") {
-                                        <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(version, springBootData) + ".svg")"></span>
+                                    @if(repository.springBootVersion(dependency.name, springBootData) != "") {
+                                        <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(dependency.name, springBootData) + ".svg")"></span>
                                     }
-                                    @if(repository.isVersionUpToDate(version)) {
+                                    @if(repository.isVersionUpToDate(dependency.name)) {
                                         <span class="badge badge-pill badge-success badge-table float-right">OK</span>
                                     }
                                 </td>
-                                <td>@repository.getDependencyVersion(version)</td>
-                                <td>@repository.getLocalDependencyVersion(version)</td>
-                                <td>@repository.getCentralDependencyVersion(version)</td>
+                                <td>@repository.getDependencyVersion(dependency.name)</td>
+                                <td>@repository.getLocalDependencyVersion(dependency.name)</td>
+                                <td>@repository.getCentralDependencyVersion(dependency.name)</td>
                             </tr>
                         }
                         </tbody>
