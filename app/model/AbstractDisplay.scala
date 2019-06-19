@@ -1,10 +1,13 @@
 package model
 
-import utils.VersionComparator
+import utils.{ImageHelper, VersionComparator}
 
-abstract class AbstractDisplay(val name: String,
-                               val latestVersion: String,
-                               val versions: Map[String, Set[String]]) {
+abstract class AbstractDisplay(
+  val name: String,
+  val latestVersion: String,
+  val versions: Map[String, Set[String]],
+  val dependencyType: String
+) {
 
   def getRepositories(plugin: String): Seq[String] =
     versions
@@ -45,5 +48,5 @@ abstract class AbstractDisplay(val name: String,
     * For instance for ''my-image.jpg'' found in ''public/images'',
     * the method should return ''images/my-image.jpg''
     */
-  def getIconPath: String
+  def getIconPath: String = ImageHelper.getIconPath(dependencyType)
 }
