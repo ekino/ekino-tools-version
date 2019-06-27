@@ -19,7 +19,7 @@ object GradleRepositoryParser extends AbstractParser {
   val gradleWrapperFileName = "gradle/wrapper/gradle-wrapper.properties"
 
   val artifactRegex: Regex = ("""\s*""" +
-    """(?:mavenBom|classpath|compile|compileOnly|testCompile|runtime|play|playTest|integrationTestCompile|api|implementation|testImplementation|testRuntimeOnly|runtimeOnly)""" +
+    """(?:mavenBom|classpath|api|(?:i|testI|integrationTestI)mplementation|(?:c|testC|integrationTestC)ompile(?:Only)?|(?:r|testR|integrationTestR)untime(?:Only)?|(?:a|testA|integrationTestA)nnotationProcessor|play(?:Test)?)""" +
     """[\s(]*""" +
     """(?:group\s*[:=]\s*)?""" +
     """\(?['"]""" +
