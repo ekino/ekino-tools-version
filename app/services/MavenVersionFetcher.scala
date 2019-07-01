@@ -51,15 +51,6 @@ object MavenVersionFetcher {
       case NonFatal(e) =>
         logger.error(s"Unexpected exception for $name", e)
         (name, "")
-
     }
-
   }
-
-  def isMavenVersion(name: String): Boolean =
-    name match {
-      case pattern(_, _) => true
-      case _             => false
-    }
-
 }

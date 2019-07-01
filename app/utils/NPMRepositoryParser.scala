@@ -14,30 +14,32 @@ object NPMRepositoryParser extends AbstractParser {
   private val lockFileName = "package-lock.json"
   private val npmVersion = """[~<>=v\^]*(.*)""".r
 
-  override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
+  override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
     // project files
-    val buildFile = getBuildFile(file)
+    val buildFiles = getBuildFiles(folder)
+
+    val dependencies = buildFiles.map(getDependencies(_, folder)).reduce((d1, d2) => d1 ++ d2)
+
+    Repository(folder.getName, groupName, dependencies, "NPM", Seq.empty[Plugin])
+  }
+
+  private def getDependencies(buildFile: File, folder: File): Seq[Dependency] = {
+    val subfolder = getSubfolder(buildFile, folder)
 
     val source = getFileAsString(buildFile)
     val jsonValues = Json.parse(source).as[JsObject].value
 
-    val name = jsonValues.get("name")
-      .map(_.as[JsString].value)
-      .getOrElse(file.getName)
-
     val dependencies = (extractDependencies(jsonValues.get("devDependencies")) ++ extractDependencies(jsonValues.get("dependencies")))
-      .map(p => NodeDependency(p._1, p._2))
+      .map(p => NodeDependency(p._1, p._2, subfolder))
       .toSeq
 
-    val lockFile = new File(file, lockFileName)
-    val resolvedDependencies = getResolvedDependencies(lockFile)
+    val lockFile = new File(buildFile.getParentFile, lockFileName)
+    val resolvedDependencies = getResolvedDependencies(lockFile, subfolder)
 
-    val result = if (resolvedDependencies.isEmpty) dependencies else resolvedDependencies.filter(d => dependencies.map(_.name).contains(d.name))
-
-    Some(Repository(name, groupName, result, "NPM", Seq.empty[Plugin]))
+    if (resolvedDependencies.isEmpty) dependencies else resolvedDependencies.filter(d => dependencies.map(_.name).contains(d.name))
   }
 
-  private def getResolvedDependencies(lockFile: File): Seq[NodeDependency] = {
+  private def getResolvedDependencies(lockFile: File, subfolder: String): Seq[NodeDependency] = {
     if (lockFile.exists()) {
       Json.parse(getFileAsString(lockFile))
         .as[JsObject]
@@ -45,7 +47,7 @@ object NPMRepositoryParser extends AbstractParser {
         .getOrElse("dependencies", JsObject.empty)
         .asInstanceOf[JsObject]
         .fields
-        .map(p => NodeDependency(p._1, p._2.as[JsObject].value("version").as[JsString].value))
+        .map(p => NodeDependency(p._1, p._2.as[JsObject].value("version").as[JsString].value, subfolder))
     } else {
       Seq.empty
     }
@@ -54,7 +56,7 @@ object NPMRepositoryParser extends AbstractParser {
   override def canProcess(repository: File): Boolean =
     super.canProcess(repository) && !YarnLockRepositoryParser.canProcess(repository)
 
-  override def getBuildFile(repositoryPath: File): File = new File(repositoryPath, buildFileName)
+  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileName.r)
 
   private def extractDependencies(value: Option[JsValue]): Map[String, String] =
     value
