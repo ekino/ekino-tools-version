@@ -2,7 +2,7 @@ package utils
 
 import java.io.File
 
-import model.{GradlePlugin, JvmDependency, Repository, SpringBootData}
+import model._
 import play.api.Logger
 
 import scala.util.matching.Regex
@@ -12,8 +12,7 @@ import scala.util.matching.Regex
   */
 object GradleRepositoryParser extends AbstractParser {
 
-  val buildFileName = "build.gradle"
-  val buildKotlinFileName = "build.gradle.kts"
+  val buildFileRegex: Regex = "build.gradle(?:\\.kts)?".r
   val propertiesFileName = "gradle.properties"
   val settingsFileName = "settings.gradle"
   val gradleWrapperFileName = "gradle/wrapper/gradle-wrapper.properties"
@@ -39,51 +38,49 @@ object GradleRepositoryParser extends AbstractParser {
     """['"]?([_a-zA-Z0-9.-]+)['"]?""").r
   private val logger = Logger(GradleRepositoryParser.getClass)
 
-  override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
+  override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
     // project files
-    val repositoryPath = file.getPath
-    val buildFile = getBuildFile(file)
+    val repositoryPath = folder.getPath
+    val buildFiles = getBuildFiles(folder)
     val propertiesFile = new File(repositoryPath, propertiesFileName)
     val settingsFile = new File(repositoryPath, settingsFileName)
     val gradleVersionFile = new File(repositoryPath, gradleWrapperFileName)
+    val defaultProperties = extractFromFile(propertiesFile, propertyRegex, extractProperties)
 
-    if (buildFile.exists) {
+    val name = extractFromFile(settingsFile, projectNameRegex, extractValue).getOrElse("value", folder.getName)
+    logger.info(s"name $name")
+    val gradleVersion = extractFromFile(gradleVersionFile, gradleVersionRegex, extractValue).getOrElse("value", "")
 
-      val name = extractFromFile(settingsFile, projectNameRegex, extractValue).getOrElse("value", file.getName)
-      logger.info(s"name $name")
-      val extractedArtifacts = extractFromFile(buildFile, artifactRegex, extractArtifacts)
-      logger.debug(s"artifacts $extractedArtifacts")
+    val dependencies = buildFiles
+      .map(getDependencies(_, folder, springBootDefaultData, springBootMasterData, defaultProperties))
+      .reduce((r1, r2) => (r1._1 ++ r2._1, r1._2 ++ r2._2))
 
-      val defaultProperties = extractFromFile(propertiesFile, propertyRegex, extractProperties)
-      val otherProperties = extractFromFile(buildFile, propertyRegex, extractProperties)
-      val properties = defaultProperties ++ otherProperties
-
-      logger.debug(s"properties $properties")
-
-      val gradleVersion = extractFromFile(gradleVersionFile, gradleVersionRegex, extractValue).getOrElse("value", "")
-      val plugins = replaceVersionsHolder(extractFromFile(buildFile, pluginRegex, extractProperties), properties)
-        .map(p => GradlePlugin(p._1, p._2))
-        .toSeq
-      val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
-        .map(p => JvmDependency(p._1, p._2))
-        .toSeq
-      val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
-      val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
-        .map(p => JvmDependency(p._1, p._2))
-        .toSeq
-      Some(Repository(name, groupName, artifacts ++ springBootOverrides, s"Gradle $gradleVersion", plugins))
-    } else {
-      // cannot process versions
-      None
-    }
+    Repository(name, groupName, dependencies._1, s"Gradle $gradleVersion", dependencies._2)
   }
 
-  override def getBuildFile(repositoryPath: File): File = {
-    val buildFile = new File(repositoryPath, buildFileName)
-    if (!buildFile.exists()) {
-      new File(repositoryPath, buildKotlinFileName)
-    } else {
-      buildFile
-    }
+  private def getDependencies(buildFile: File, folder: File, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData, defaultProperties: Map[String, String]): (Seq[Dependency], Seq[Plugin]) = {
+    val subfolder = getSubfolder(buildFile, folder)
+
+    val extractedArtifacts = extractFromFile(buildFile, artifactRegex, extractArtifacts)
+    logger.debug(s"artifacts $extractedArtifacts")
+
+    val otherProperties = extractFromFile(buildFile, propertyRegex, extractProperties)
+    val properties = defaultProperties ++ otherProperties
+
+    logger.debug(s"properties $properties")
+
+    val plugins = replaceVersionsHolder(extractFromFile(buildFile, pluginRegex, extractProperties), properties)
+      .map(p => GradlePlugin(p._1, p._2))
+      .toSeq
+    val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
+      .map(p => JvmDependency(p._1, p._2, subfolder))
+      .toSeq
+    val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
+    val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
+      .map(p => JvmDependency(p._1, p._2, subfolder))
+      .toSeq
+    (artifacts ++ springBootOverrides, plugins)
   }
+
+  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileRegex)
 }

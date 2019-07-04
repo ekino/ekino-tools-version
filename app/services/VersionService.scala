@@ -122,7 +122,7 @@ class VersionService @Inject()(configuration: Configuration,
   private def parseRepository(projectFolder: File): Option[Repository] = {
     parsers
       .filter(_.canProcess(projectFolder))
-      .flatMap(_.buildRepository(projectFolder, projectFolder.getParentFile.getName, springBootDefaultData, springBootMasterData))
+      .map(_.buildRepository(projectFolder, projectFolder.getParentFile.getName, springBootDefaultData, springBootMasterData))
       .reduceOption((r1, r2) => Repository(
         r1.name,
         r1.group,
@@ -174,20 +174,18 @@ class VersionService @Inject()(configuration: Configuration,
     * Compute local and central versions.
     */
   private def computeDependencyVersions(repositories: Seq[Repository]): (Map[String, String], Map[String, String]) = {
-    val dependencies = repositories
+    val dependencyMap: Map[String, Seq[Dependency]] = repositories
       .flatMap(_.dependencies)
       .groupBy(_.name)
-      .mapValues(seq => seq.map(_.version).max(VersionComparator))
 
-    val localDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenLocal))
-    val centralDependencyFutures = dependencies.keys.filter(MavenVersionFetcher.isMavenVersion).map(MavenVersionFetcher.getLatestVersion(_, config.mavenCentral))
-    val npmDependencyFutures = dependencies.keys.filter(!MavenVersionFetcher.isMavenVersion(_)).map(NpmVersionFetcher.getLatestVersion(_, config.npmRegistry))
+    val localDependencyFutures = dependencyMap.filter(e => isJvmDependencies(e._2)).keys.map(MavenVersionFetcher.getLatestVersion(_, config.mavenLocal))
+    val centralDependencyFutures = dependencyMap.filter(e => isJvmDependencies(e._2)).keys.map(MavenVersionFetcher.getLatestVersion(_, config.mavenCentral))
+    val npmDependencyFutures = dependencyMap.filter(e => isNodeDependencies(e._2)).keys.map(NpmVersionFetcher.getLatestVersion(_, config.npmRegistry))
 
     val list = FutureHelper.await[(String, String)](centralDependencyFutures ++ localDependencyFutures ++ npmDependencyFutures, configuration, "timeout.compute-plugins")
 
-    val result = list.groupBy(_._1).mapValues(a => a.map(_._2).max(VersionComparator))
-
-    (dependencies, result)
+    (dependencyMap.mapValues(seq => seq.map(_.version).max(VersionComparator)),
+      list.groupBy(_._1).mapValues(seq => seq.map(_._2).max(VersionComparator)))
   }
 
   /**
@@ -219,4 +217,7 @@ class VersionService @Inject()(configuration: Configuration,
         d._2.mapValues(_.map(_._2).toSet)))                                       // - all the projects using it by version
       .toSeq
   }
+
+  private def isJvmDependencies(dependencies: Seq[Dependency]) = dependencies.forall(_.isInstanceOf[JvmDependency])
+  private def isNodeDependencies(dependencies: Seq[Dependency]) = dependencies.forall(_.isInstanceOf[NodeDependency])
 }

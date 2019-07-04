@@ -20,29 +20,33 @@ object SBTRepositoryParser extends AbstractParser {
   val scala2Regex: Regex = """(2.\d+).*""".r
   private val logger = Logger(SBTRepositoryParser.getClass)
 
-  override def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
+  override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
     // project files
-    val buildFile = getBuildFile(file)
+    val buildFile = getBuildFiles(folder).head
 
-    val name = file.getName
+    val (scalaVersion, artifacts) = getDependencies(folder, buildFile)
+
+    Repository(folder.getName, groupName, artifacts, s"SBT with scala $scalaVersion", Seq.empty[Plugin])
+  }
+
+  private def getDependencies(folder: File, buildFile: File): (String, Seq[JvmDependency]) = {
+    val subfolder = getSubfolder(buildFile, folder)
+
     val extractedArtifacts = extractFromFile(buildFile, artifactRegex, extractArtifacts)
     val scalaArtifacts = extractFromFile(buildFile, scalaArtifactRegex, extractArtifacts)
     val properties = extractFromFile(buildFile, propertyRegex, extractProperties)
     val scalaVersion = replaceVersionsHolder(extractFromFile(buildFile, scalaVersionRegex, extractValue), properties).getOrElse("value", "2.12.0")
     val shortScalaVersion = shortenScalaVersion(scalaVersion)
 
-    logger.debug(s"scala version for $name is $scalaVersion")
+    logger.debug(s"scala version for ${folder.getName} is $scalaVersion")
 
     val artifacts = replaceVersionsHolder(extractedArtifacts ++ appendScalaVersion(scalaArtifacts, shortScalaVersion), properties)
-      .map(p => JvmDependency(p._1, p._2))
+      .map(p => JvmDependency(p._1, p._2, subfolder))
       .toSeq
-
-    Some(Repository(name, groupName, artifacts, s"SBT with scala $scalaVersion", Seq.empty[Plugin]))
+    (scalaVersion, artifacts)
   }
 
-  override def getBuildFile(repositoryPath: File): File = {
-    new File(repositoryPath, buildFileName)
-  }
+  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileName.r)
 
   private def appendScalaVersion(artifacts: Map[String, String], version: String): Map[String, String] = {
     artifacts

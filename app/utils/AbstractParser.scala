@@ -1,10 +1,12 @@
 package utils
 
 import java.io.{File, IOException}
+import java.nio.file.Files
 
 import model.{Repository, SpringBootData}
 import play.api.Logger
 
+import scala.collection.JavaConverters._
 import scala.collection.immutable.ListMap
 import scala.io.Source
 import scala.util.matching.Regex
@@ -21,14 +23,15 @@ abstract class AbstractParser {
   val extractProperties: ExtractGroups = matchData => matchData.group(1) -> matchData.group(2)
   val extractValue: ExtractGroups = matchData => "value" -> matchData.group(1)
   val extractArtifacts: ExtractGroups = matchData => (matchData.group(1) + ":" + matchData.group(2)).trim -> matchData.group(3)
+  val excludedFolder: Regex = """.*/(?:test|.gradle|node_modules|target|build|dist)/.*""".r
   private val logger = Logger(classOf[AbstractParser])
 
-  def getBuildFile(repositoryPath: File): File
+  def getBuildFiles(repositoryPath: File): Seq[File]
 
   def canProcess(repository: File): Boolean =
-    getBuildFile(repository).exists()
+    getBuildFiles(repository).exists(_.exists())
 
-  def buildRepository(file: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository]
+  def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository
 
   // read a file and extract lines matching a pattern
   protected def extractFromFile(file: File, regex: Regex, extract: ExtractGroups): Map[String, String] = {
@@ -62,4 +65,18 @@ abstract class AbstractParser {
     sourceFile.close()
     content
   }
+
+  protected def findBuildFilesByPattern(repositoryPath: File, regex: Regex): Seq[File] = {
+    Files.walk(repositoryPath.toPath)
+      .filter(Files.isRegularFile(_))
+      .filter(file => regex.findFirstMatchIn(file.toString).isDefined)
+      .filter(file => excludedFolder.findFirstMatchIn(file.toString).isEmpty)
+      .iterator()
+      .asScala
+      .map(_.toFile)
+      .toSeq
+      .sortBy(_.toString.length())
+  }
+
+  protected def getSubfolder(buildFile: File, folder: File): String = if (buildFile.getParentFile.equals(folder)) "" else buildFile.getParentFile.getName
 }

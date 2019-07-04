@@ -20,20 +20,20 @@ case class DisplayRepository(
   /**
     * Indicates whether a dependency version is up-to-date with other repositories.
     *
-    * @param dependency the dependency id
+    * @param dependency the dependency
     * @return True when the dependency is up to date
     */
-  def isVersionUpToDate(dependency: String): Boolean = {
-    val version = getDependencyVersion(dependency)
-    val centralReference = getCentralDependencyVersion(dependency)
-    val reference = if (centralReference.isEmpty) getLocalDependencyVersion(dependency) else centralReference
+  def isVersionUpToDate(dependency: Dependency): Boolean = {
+    val version = dependency.version
+    val centralReference = getCentralDependencyVersion(dependency.name)
+    val reference = if (centralReference.isEmpty) getLocalDependencyVersion(dependency.name) else centralReference
     VersionComparator.compare(version, reference) >= 0
   }
 
-  def springBootVersion(dependency: String, springBootData: SpringBootData): String = {
-    if (springBootData.artefacts.contains(dependency)
+  def springBootVersion(dependency: Dependency, springBootData: SpringBootData): String = {
+    if (springBootData.artefacts.contains(dependency.name)
       && repository.plugins.exists(_.name == "org.springframework.boot")) {
-      val compare = VersionComparator.compare(getDependencyVersion(dependency), springBootData.properties(springBootData.artefacts(dependency)))
+      val compare = VersionComparator.compare(dependency.version, springBootData.properties(springBootData.artefacts(dependency.name)))
       if (compare == 0) {
         "springboot-equal"
       } else if (compare > 0) {
@@ -59,13 +59,23 @@ case class DisplayRepository(
     VersionComparator.compare(version, reference) >= 0
   }
 
-  def getDependencyVersion(dependency: String): String = repository.dependencies.find(_.name.equals(dependency)).map(_.version).getOrElse("")
+  def getDependencyVersion(dependency: String, subfolder: String): String = repository.dependencies.find(dep => dep.name.equals(dependency) && dep.subfolder.equals(subfolder)).map(_.version).getOrElse("")
   def getLocalDependencyVersion(dependency: String): String = localDependencies.getOrElse(dependency, "")
   def getCentralDependencyVersion(dependency: String): String = centralDependencies.getOrElse(dependency, "")
   def getPluginVersion(pluginId: String): String = repository.plugins.find(_.name.equals(pluginId)).map(_.version).getOrElse("")
   def getLocalPluginVersion(pluginId: String): String = localPlugins.getOrElse(pluginId, "")
   def getGradlePluginVersion(pluginId: String): String = gradlePlugins.getOrElse(pluginId, "")
   def project: String = repository.group
+
+  /**
+    * Checks that the given dependency is the first having this subfolder.
+    */
+  def isFirstOfSubfolder(dependency: Dependency): Boolean = {
+    repository.dependencies
+      .filter(_.subfolder.nonEmpty)
+      .find(_.subfolder.equals(dependency.subfolder))
+      .exists(_.equals(dependency))
+  }
 
   implicit class Regex(sc: StringContext) {
     def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
@@ -92,7 +102,7 @@ case class DisplayRepository(
     }
     val countVersion = repository
       .dependencies
-      .count(p => isVersionUpToDate(p.name))
+      .count(isVersionUpToDate)
       .asInstanceOf[Double]
 
     val countPlugin = repository

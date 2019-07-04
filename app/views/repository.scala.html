@@ -51,20 +51,23 @@
                         </thead>
                         <tbody>
                         @for(dependency <- repository.repository.dependencies) {
+                            @if(repository.isFirstOfSubfolder(dependency)) {
+                                <th colspan="4" class="repository"><span class="default"> @dependency.subfolder</span></th>
+                            }
                             <tr>
-                                <td class="@repository.springBootVersion(dependency.name, springBootData)">
+                                <td class="@repository.springBootVersion(dependency, springBootData)">
                                     <span class="small-image"><img src="@routes.Assets.at(utils.ImageHelper.getIconPath(dependency.getType))" alt="image"></span>
                                     <a href="@routes.DependencyController.dependency(dependency.name)" role="button">
                                         <span>@dependency.name</span>
                                     </a>
-                                    @if(repository.springBootVersion(dependency.name, springBootData) != "") {
-                                        <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(dependency.name, springBootData) + ".svg")"></span>
+                                    @if(repository.springBootVersion(dependency, springBootData) != "") {
+                                        <span class="small-image"><img src="@routes.Assets.at("images/" + repository.springBootVersion(dependency, springBootData) + ".svg")"></span>
                                     }
-                                    @if(repository.isVersionUpToDate(dependency.name)) {
+                                    @if(repository.isVersionUpToDate(dependency)) {
                                         <span class="badge badge-pill badge-success badge-table float-right">OK</span>
                                     }
                                 </td>
-                                <td>@repository.getDependencyVersion(dependency.name)</td>
+                                <td>@dependency.version</td>
                                 <td>@repository.getLocalDependencyVersion(dependency.name)</td>
                                 <td>@repository.getCentralDependencyVersion(dependency.name)</td>
                             </tr>
