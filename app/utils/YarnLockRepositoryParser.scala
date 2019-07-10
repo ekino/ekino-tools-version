@@ -16,7 +16,9 @@ object YarnLockRepositoryParser extends AbstractParser {
     // project files
     val buildFiles = getBuildFiles(folder)
 
-    val dependencies = buildFiles.map(getDependencies(_, folder, groupName)).reduce((d1, d2) => d1 ++ d2)
+    val dependencies = buildFiles
+      .map(getDependencies(_, folder, groupName))
+      .fold(Seq.empty[Dependency])((d1, d2) => d1 ++ d2)
 
     Repository(folder.getName, groupName, dependencies, "Yarn", Seq.empty)
   }
