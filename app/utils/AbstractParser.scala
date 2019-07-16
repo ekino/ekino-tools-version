@@ -80,5 +80,11 @@ abstract class AbstractParser {
       .sortBy(_.toString.length())
   }
 
-  protected def getSubfolder(buildFile: File, folder: File): String = if (buildFile.getParentFile.equals(folder)) "" else buildFile.getParentFile.getName
+  protected def getSubfolder(buildFile: File, folder: File): String = {
+    val path = folder.getPath
+    val parentPath = buildFile.getParentFile.getPath
+    if (path.equals(parentPath)) ""
+    else if (path.startsWith(parentPath)) path.substring(parentPath.length + 1)
+    else buildFile.getParentFile.getName
+  }
 }
