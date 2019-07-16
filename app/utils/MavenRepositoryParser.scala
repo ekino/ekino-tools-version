@@ -57,6 +57,6 @@ object MavenRepositoryParser extends AbstractParser {
     (artifacts ++ springBootOverrides, plugins)
   }
 
-  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileName.r)
+  override def getBuildFilesRegex: Regex = buildFileName.r
 }
 

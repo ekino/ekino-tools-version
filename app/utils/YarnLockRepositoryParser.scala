@@ -4,6 +4,8 @@ import java.io.File
 
 import model._
 
+import scala.util.matching.Regex
+
 /**
   * Parse a yarn project and extract version data.
   */
@@ -34,7 +36,6 @@ object YarnLockRepositoryParser extends AbstractParser {
       .toSeq
   }
 
-  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileName.r)
-
+  override def getBuildFilesRegex: Regex = buildFileName.r
 }
 

@@ -26,7 +26,9 @@ abstract class AbstractParser {
   val excludedFolder: Regex = """.*/(?:test|.gradle|node_modules|target|build|dist)/.*""".r
   private val logger = Logger(classOf[AbstractParser])
 
-  def getBuildFiles(repositoryPath: File): Seq[File]
+  def getBuildFilesRegex: Regex
+
+  protected def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, getBuildFilesRegex)
 
   def canProcess(repository: File): Boolean =
     getBuildFiles(repository).exists(_.exists())

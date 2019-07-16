@@ -46,7 +46,7 @@ object SBTRepositoryParser extends AbstractParser {
     (scalaVersion, artifacts)
   }
 
-  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileName.r)
+  override def getBuildFilesRegex: Regex = buildFileName.r
 
   private def appendScalaVersion(artifacts: Map[String, String], version: String): Map[String, String] = {
     artifacts
