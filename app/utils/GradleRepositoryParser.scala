@@ -82,5 +82,5 @@ object GradleRepositoryParser extends AbstractParser {
     (artifacts ++ springBootOverrides, plugins)
   }
 
-  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileRegex)
+  override def getBuildFilesRegex: Regex = buildFileRegex
 }

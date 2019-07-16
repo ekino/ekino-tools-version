@@ -5,6 +5,8 @@ import java.io.File
 import model._
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 
+import scala.util.matching.Regex
+
 /**
   * Parse a npm project and extract version data.
   */
@@ -56,7 +58,7 @@ object NPMRepositoryParser extends AbstractParser {
   override def canProcess(repository: File): Boolean =
     super.canProcess(repository) && !YarnLockRepositoryParser.canProcess(repository)
 
-  override def getBuildFiles(repositoryPath: File): Seq[File] = findBuildFilesByPattern(repositoryPath, buildFileName.r)
+  override def getBuildFilesRegex: Regex = buildFileName.r
 
   private def extractDependencies(value: Option[JsValue]): Map[String, String] =
     value
