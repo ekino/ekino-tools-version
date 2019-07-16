@@ -123,14 +123,14 @@ class VersionService @Inject()(configuration: Configuration,
     parsers
       .filter(_.canProcess(projectFolder))
       .map(_.buildRepository(projectFolder, projectFolder.getParentFile.getName, springBootDefaultData, springBootMasterData))
-      .reduceOption((r1, r2) => Repository(
-        r1.name,
-        r1.group,
-        r1.dependencies ++ r2.dependencies,
-        r1.toolVersion + "/" + r2.toolVersion,
-        r1.plugins ++ r2.plugins
-      ))
+      .reduceOption((r1, r2) => r1.copy(
+        dependencies = r1.dependencies ++ r2.dependencies,
+        toolVersion = r1.toolVersion + "/" + r2.toolVersion,
+        plugins = r1.plugins ++ r2.plugins))
       .filter(repo => repo.dependencies.nonEmpty || repo.plugins.nonEmpty)
+      .map(r => r.copy(
+        dependencies = r.dependencies.sortBy(d => (d.subfolder, d.getType, d.name)),
+        plugins = r.plugins.sortBy(p => (p.getType, p.name))))
   }
 
   /**
