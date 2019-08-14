@@ -6,6 +6,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsValue, Json}
 import play.api.{Configuration, Logger}
 
+import scala.annotation.tailrec
 import scala.io.Source
 
 @Singleton
@@ -27,6 +28,7 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
   /**
     * Fetch the repository urls recursively for the given group ID using GitLab API.
     */
+  @tailrec
   private def fetchGitlabUrls(groupId: String, page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
     val url: String = s"$gitlabUrl/api/v4/groups/$groupId/projects?per_page=100&page=$page"
 

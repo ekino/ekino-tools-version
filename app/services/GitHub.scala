@@ -6,6 +6,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsValue, Json}
 import play.api.{Configuration, Logger}
 
+import scala.annotation.tailrec
 import scala.io.Source
 
 @Singleton
@@ -28,6 +29,7 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
   /**
     * Fetch the repository urls recursively for the given user using GitHub API.
     */
+  @tailrec
   private def fetchRepositoryUrls(user: String, page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
     val url: String = s"https://api.github.com/users/$user/repos?access_token=$gitHubToken&per_page=100&page=$page"
 
