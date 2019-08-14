@@ -13,10 +13,10 @@ import scala.util.matching.Regex
 object SBTRepositoryParser extends AbstractParser {
 
   val buildFileName = "build.sbt"
-  val artifactRegex: Regex = """[^"]*(?<! %% )\"([^\"]+)\" % \"([^\"]+)\" % \"?([^ ",\n]+).*""".r
-  val scalaArtifactRegex: Regex = """[^\"]*\"([^\"]+)\" %% \"([^\"]+)\" % \"?([^ ",\n]+).*""".r
-  val propertyRegex: Regex = """.*val (\w+) = \"([^ \n]+)\"(?! %)""".r
-  val scalaVersionRegex: Regex = """.*scalaVersion (?:in ThisBuild )?:= \"?([^ ",\n]+).*""".r
+  val artifactRegex: Regex = """[^"]*(?<! %% )"([^"]+)" % "([^"]+)" % "?([^ ",\n]+).*""".r
+  val scalaArtifactRegex: Regex = """[^"]*"([^"]+)" %% "([^"]+)" % "?([^ ",\n]+).*""".r
+  val propertyRegex: Regex = """.*val (\w+) = "([^ \n]+)"(?! %)""".r
+  val scalaVersionRegex: Regex = """.*scalaVersion (?:in ThisBuild )?:= "?([^ ",\n]+).*""".r
   val scala2Regex: Regex = """(2.\d+).*""".r
   private val logger = Logger(SBTRepositoryParser.getClass)
 

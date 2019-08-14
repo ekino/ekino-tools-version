@@ -12,7 +12,7 @@ import scala.util.matching.Regex
 object YarnLockRepositoryParser extends AbstractParser {
 
   private val buildFileName = "yarn.lock"
-  private val yarnVersion = """"?([^\n,]*)\@.*:\n\s+version "(.*)"""".r
+  private val yarnVersion = """"?([^\n,]*)@.*:\n\s+version "(.*)"""".r
 
   override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
     // project files
