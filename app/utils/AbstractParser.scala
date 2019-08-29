@@ -18,11 +18,11 @@ import scala.util.matching.Regex.MatchData
 abstract class AbstractParser {
 
   // transforms a regex match data into a map entry
-  type ExtractGroups = MatchData => (String, String)
+  type ExtractGroups[T] = MatchData => (String, T)
 
-  val extractProperties: ExtractGroups = matchData => matchData.group(1) -> matchData.group(2)
-  val extractValue: ExtractGroups = matchData => "value" -> matchData.group(1)
-  val extractArtifacts: ExtractGroups = matchData => (matchData.group(1) + ":" + matchData.group(2)).trim -> matchData.group(3)
+  val extractProperties: ExtractGroups[String] = matchData => matchData.group(1) -> matchData.group(2)
+  val extractValue: ExtractGroups[String] = matchData => "value" -> matchData.group(1)
+  val extractArtifacts: ExtractGroups[String] = matchData => (matchData.group(1) + ":" + matchData.group(2)).trim -> matchData.group(3)
   val excludedFolder: Regex = """.*/(?:test|.gradle|node_modules|target|build|dist)/.*""".r
   private val logger = Logger(classOf[AbstractParser])
 
@@ -36,7 +36,7 @@ abstract class AbstractParser {
   def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository
 
   // read a file and extract lines matching a pattern
-  protected def extractFromFile(file: File, regex: Regex, extract: ExtractGroups): Map[String, String] = {
+  protected def extractFromFile[T](file: File, regex: Regex, extract: ExtractGroups[T]): Map[String, T] = {
     try {
       // Seek all results matching regex and converting it to a map
       val content = getFileAsString(file)
@@ -48,7 +48,7 @@ abstract class AbstractParser {
     } catch {
       case _: IOException =>
         logger.debug(s"Cannot find ${file.getName}")
-        Map.empty[String, String]
+        Map.empty[String, T]
 
     }
   }
