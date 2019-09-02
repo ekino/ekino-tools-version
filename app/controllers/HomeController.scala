@@ -7,25 +7,33 @@ import javax.inject.{Inject, Named}
 import job.{UpdateMessage, UpdateWithResponseMessage}
 import model.CustomExecutionContext._
 import play.api.ConfigLoader.stringLoader
+import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.{ConfigLoader, Configuration}
-import services.{GitRepositoryService, VersionService}
+import services.VersionService
+import utils.Formatters._
 
 import scala.concurrent.Future
 
 /**
   * Main controller of repositories.
   */
-class HomeController @Inject()(versionService: VersionService, gitRepositoryService: GitRepositoryService,
-                               configuration: Configuration, @Named("updater-actor") val updaterActor: ActorRef) extends InjectedController {
+class HomeController @Inject()(
+  versionService: VersionService,
+  configuration: Configuration,
+  @Named("updater-actor") val updaterActor: ActorRef
+) extends InjectedController {
 
   /**
     * List all the repositories.
     * @return the home Action
     */
-  def index = Action {
+  def index: Action[AnyContent] = Action { implicit request =>
     val names = versionService.listProjects()
-    Ok(views.html.home(names))
+    render {
+      case Accepts.Json() => Ok(Json.toJson(names))
+      case _              => Ok(views.html.home(names))
+    }
   }
 
   /**
@@ -44,6 +52,5 @@ class HomeController @Inject()(versionService: VersionService, gitRepositoryServ
       Future.successful(redirect)
     }
   }
-
 
 }
