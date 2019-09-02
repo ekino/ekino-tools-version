@@ -2,7 +2,7 @@ package model
 
 import utils.{ImageHelper, VersionComparator}
 
-abstract class AbstractDisplay(
+sealed abstract class AbstractDisplay(
   val name: String,
   val latestVersion: String,
   val versions: Map[String, Set[String]],
@@ -50,3 +50,38 @@ abstract class AbstractDisplay(
     */
   def getIconPath: String = ImageHelper.getIconPath(dependencyType)
 }
+
+/**
+  * A plugin displayed in the view.
+  */
+case class DisplayPlugin(override val name: String,
+  override val latestVersion: String,
+  override val versions: Map[String, Set[String]],
+  override val dependencyType: String
+) extends AbstractDisplay(name, latestVersion, versions, dependencyType)
+
+object DisplayPlugin {
+
+  def from(
+    plugin: Plugin,
+    latestVersion: String,
+    versions: Map[String, Set[String]]): DisplayPlugin = new DisplayPlugin(plugin.name, latestVersion, versions, plugin.getType)
+}
+
+/**
+  * A dependency displayed in the view.
+  */
+case class DisplayDependency(override val name: String,
+  override val latestVersion: String,
+  override val versions: Map[String, Set[String]],
+  override val dependencyType: String)
+  extends AbstractDisplay(name, latestVersion, versions, dependencyType)
+
+object DisplayDependency {
+
+  def from(
+    version: Dependency,
+    latestVersion: String,
+    versions: Map[String, Set[String]]): DisplayDependency = new DisplayDependency(version.name, latestVersion, versions, version.getType)
+}
+
