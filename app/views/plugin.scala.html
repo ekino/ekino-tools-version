@@ -38,7 +38,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @for(version <- plugin.versions.keys.toSeq.sortWith(plugin.sortByVersion)) {
+                    @for(version <- plugin.versions.keys.toSeq.sorted(utils.VersionComparator)) {
                         <tr>
                             <td>@version</td>
                             <td>
