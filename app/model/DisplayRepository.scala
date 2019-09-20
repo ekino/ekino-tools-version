@@ -31,15 +31,24 @@ case class DisplayRepository(
   }
 
   def springBootVersion(dependency: Dependency, springBootData: SpringBootData): String = {
-    if (springBootData.artefacts.contains(dependency.name)
-      && repository.plugins.exists(_.name == "org.springframework.boot")) {
-      val compare = VersionComparator.compare(dependency.version, springBootData.properties(springBootData.artefacts(dependency.name)))
-      if (compare == 0) {
-        "springboot-equal"
-      } else if (compare > 0) {
-        "springboot-up"
+    val springbootVersion = repository.plugins.find(_.name == "org.springframework.boot")
+
+    if (springBootData.artefacts.contains(dependency.name) && springbootVersion.isDefined) {
+
+      val placeholder = springBootData.artefacts(dependency.name)
+
+      val version = if (springBootData.properties.contains(placeholder)) {
+        springBootData.properties(placeholder)
+      } else if (placeholder == "revision") {
+        springbootVersion.get.version
       } else {
-        "springboot-down"
+        dependency.version
+      }
+
+      VersionComparator.compare(dependency.version, version).signum match {
+        case -1 => "springboot-down"
+        case  0 => "springboot-equal"
+        case  1 => "springboot-up"
       }
     } else {
       ""

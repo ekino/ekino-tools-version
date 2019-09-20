@@ -15,9 +15,6 @@ sealed abstract class AbstractDisplay(
       .map(_.toSeq.sorted)
       .getOrElse(Seq.empty)
 
-  def sortByVersion(s1: String, s2: String): Boolean =
-    VersionComparator.compare(s1, s2) >= 0
-
   /**
     * Calculates the number of uses of this dependency in all the projects.
     *
