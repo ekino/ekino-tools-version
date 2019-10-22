@@ -6,6 +6,7 @@ import javax.inject.{Inject, Singleton}
 import model.SpringBootData
 import play.api.ConfigLoader.stringLoader
 import play.api.{Configuration, Logger}
+import scalaz.concurrent.Task
 
 import scala.collection.immutable.ListMap
 import scala.io.Source
@@ -20,7 +21,7 @@ class SpringBootVersionService @Inject()(configuration: Configuration) {
   private val propertyRegex = """\$\{(.*)\}""".r
   private val logger = Logger(classOf[SpringBootVersionService])
 
-  def computeSpringBootData(master: Boolean): SpringBootData = {
+  def computeSpringBootData(master: Boolean): Task[SpringBootData] = Task {
     if (master) {
       getData(configuration.get("github.springboot.master-url"))
     } else {

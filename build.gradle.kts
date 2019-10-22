@@ -31,6 +31,7 @@ dependencies {
     implementation("com.typesafe.play:play-guice_2.12:${property("play.version")}")
     implementation("com.typesafe.play:filters-helpers_2.12:${property("play.version")}")
     implementation("net.codingwell:scala-guice_2.12:${property("scala-guice.version")}")
+    implementation("org.scalaz:scalaz-concurrent_2.12:${property("scalaz.version")}")
 
     testImplementation("org.scalatestplus.play:scalatestplus-play_2.12:${property("scalatestplus-play_2.12.version")}")
 }

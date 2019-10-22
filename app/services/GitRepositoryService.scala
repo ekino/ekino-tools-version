@@ -3,17 +3,15 @@ package services
 import java.io.File
 
 import javax.inject.{Inject, Singleton}
-import model.CustomExecutionContext.executionContextExecutor
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.RefNotAdvertisedException
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import play.api.{Configuration, Logger}
-import utils.FutureHelper
+import scalaz.concurrent.Task
+import utils.TaskHelper.gather
 
-import scala.concurrent.Future
 import scala.language.postfixOps
-import scala.util.Try
 
 @Singleton
 class GitRepositoryService @Inject()(configuration: Configuration,
@@ -25,16 +23,17 @@ class GitRepositoryService @Inject()(configuration: Configuration,
   /**
     * Update all the repositories.
     */
-  def updateGitRepositories(): Unit = {
+  def updateGitRepositories(): Task[_] = {
     val path = new File(getProperty("project.repositories.path"))
     if (!path.exists()) {
       // creating workspace directory
       path.mkdirs()
     }
 
-    val updatedRepositories: Seq[Future[Unit]] = fetchRepositories().map(updateGitRepository)
-
-    FutureHelper.await[Unit](updatedRepositories, configuration, "timeout.git-update")
+    for {
+      repos <- fetchRepositories()
+      updatedRepositories <- gather(repos.flatten.map(updateGitRepository))
+    } yield updatedRepositories
   }
 
   /**
@@ -42,15 +41,15 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     *
     * @param repository the repository
     */
-  private def updateGitRepository(repository: GitRepository): Future[Unit] = Future {
+  private def updateGitRepository(repository: GitRepository): Task[_] = {
     val repositoryUrl = repository.url
     projectUrl.findFirstMatchIn(repositoryUrl) match {
       case Some(value) => updateGitRepository(repository, value.group(1))
-      case _           => logger.error(s"error with $repositoryUrl")
+      case _           => Task.now(logger.error(s"error with $repositoryUrl"))
     }
   }
 
-  private def updateGitRepository(repository: GitRepository, repositoryName: String): Unit = Try {
+  private def updateGitRepository(repository: GitRepository, repositoryName: String): Task[_] = {
 
     val repositoryDirectory = new File(getProperty("project.repositories.path"), repositoryName)
 
@@ -67,7 +66,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     * @param repository          the repository
     * @param repositoryDirectory the repository directory
     */
-  private def pullRepository(repository: GitRepository, repositoryDirectory: File): Unit = {
+  private def pullRepository(repository: GitRepository, repositoryDirectory: File): Task[_] = Task {
     val repositoryUrl = repository.url
     logger.info(s"Pulling repository $repositoryUrl")
 
@@ -94,7 +93,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     * @param repository          the repository
     * @param repositoryDirectory the repository directory
     */
-  private def cloneRepository(repository: GitRepository, repositoryDirectory: File): Unit = {
+  private def cloneRepository(repository: GitRepository, repositoryDirectory: File): Task[_] = Task {
     val repositoryUrl = repository.url
     logger.info(s"Cloning repository $repositoryUrl")
 
@@ -118,13 +117,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     *
     * @return a sequence of all the repositories
     */
-  private def fetchRepositories(): Seq[GitRepository] = {
-    val repositories = gitHosts
-      .map(host => Future { host.getRepositories })
-      .toSeq
-
-    FutureHelper.await[Seq[GitRepository]](repositories, configuration, "timeout.fetch-repositories").flatten
-  }
+  private def fetchRepositories(): Task[List[Seq[GitRepository]]] = gather(gitHosts.map(host => Task { host.getRepositories }))
 
   private def getProperty(property: String): String = configuration.getOptional[String](property).getOrElse("")
 

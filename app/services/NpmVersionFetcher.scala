@@ -1,21 +1,17 @@
 package services
 
 import java.io.FileNotFoundException
-import java.net.URL
-
-import model.CustomExecutionContext.executionContextExecutor
 import model.Site
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsString, Json}
+import scalaz.concurrent.Task
 
-import scala.concurrent.Future
-import scala.io.Source
 import scala.util.control.NonFatal
 
 /**
   * Download npm metadata from a npm registry the last release.
   */
-object NpmVersionFetcher {
+object NpmVersionFetcher extends VersionFetcher {
 
   val ACCEPT = "Accept"
   val NPM_JSON = "application/vnd.npm.install-v1+json"
@@ -25,21 +21,13 @@ object NpmVersionFetcher {
 
 
   // download npm metadata to get the latest version
-  def getLatestVersion(name: String, site: Site): Future[(String, String)] = Future {
+  override def getLatestVersion(name: String, site: Site): Task[(String, String)] = Task {
 
     try {
       // npm meta data url
       val url = site.url + name
 
-      val connection = new URL(url).openConnection
-      if (!site.user.isEmpty && !site.password.isEmpty) {
-        connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION,
-          HttpBasicAuth.getHeader(site.user, site.password)
-        )
-      }
-      connection.setRequestProperty(ACCEPT, NPM_JSON)
-
-      val source = Source.fromInputStream(connection.getInputStream).getLines.mkString
+      val source = fetchUrl(url, site, (ACCEPT, NPM_JSON))
       val json = Json.parse(source).as[JsObject].value
 
       val version = json.get(DIST_TAGS)

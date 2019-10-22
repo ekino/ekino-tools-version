@@ -2,14 +2,15 @@ package job
 
 import akka.actor.{ActorRef, ActorSystem}
 import javax.inject.{Inject, Named}
-import model.CustomExecutionContext.executionContextExecutor
 import play.api.ConfigLoader.finiteDurationLoader
 import play.api.Configuration
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Akka Actor Scheduler.
   */
-class Scheduler @Inject()(val system: ActorSystem, @Named("updater-actor") val updaterActor: ActorRef, configuration: Configuration) {
+class Scheduler @Inject()(val system: ActorSystem, @Named("updater-actor") val updaterActor: ActorRef, configuration: Configuration)(implicit executionContext: ExecutionContext) {
 
   system.scheduler.schedule(
     configuration.get("scheduler.initial-delay"),
