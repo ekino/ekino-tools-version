@@ -49,7 +49,7 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     val urls = accumulator ++ pageUrls
 
     if (connection.getHeaderField(nextPageHeader).isEmpty) {
-      logger.info(s"gitlab repositories: $urls")
+      logger.debug(s"gitlab repositories: $urls")
       urls
     } else {
       fetchGitlabUrls(groupId, page + 1, urls)

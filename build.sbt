@@ -15,6 +15,7 @@ libraryDependencies += guice
 libraryDependencies += filters
 libraryDependencies += "org.eclipse.jgit"        % "org.eclipse.jgit"   % gradleProperties.value.getProperty("org.eclipse.jgit.version")
 libraryDependencies += "net.codingwell"         %% "scala-guice"        % gradleProperties.value.getProperty("scala-guice.version")
+libraryDependencies += "org.scalaz"             %% "scalaz-concurrent"  % gradleProperties.value.getProperty("scalaz.version")
 
 libraryDependencies += specs2                    % Test
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % gradleProperties.value.getProperty("scalatestplus-play_2.12.version") % Test

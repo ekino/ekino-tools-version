@@ -1,9 +1,9 @@
 package job
 
-
 import akka.actor.Actor
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
+import scalaz.concurrent.Task
 import services.{GitRepositoryService, VersionService}
 
 /**
@@ -15,32 +15,21 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
   private val logger = Logger(classOf[UpdaterActor])
 
   def receive: PartialFunction[Any, Unit] = {
-    case InitMessage =>
-      init()
-      sender() ! SuccessMessage
-    case UpdateMessage =>
-      update()
-    case UpdateWithResponseMessage =>
-      update()
-      sender() ! SuccessMessage
-    case message  =>
-      logger.error(s"Cannot process message: $message")
+    case InitMessage =>                init().map(_ => sender() ! SuccessMessage).unsafePerformSync
+    case UpdateMessage =>              update().unsafePerformSync
+    case UpdateWithResponseMessage =>  update().map(_ => sender() ! SuccessMessage).unsafePerformSync
+    case message =>                    logger.error(s"Cannot process message: $message")
   }
 
-  def init(): Unit = {
+  def init(): Task[_] =
     if (versionService.noData) {
       versionService.initData()
+    } else {
+      Task.now(null)
     }
-  }
 
-  def update(): Unit = {
-    val start = System.currentTimeMillis
-
+  def update(): Task[_] = {
     logger.info("Update Git Repositories")
-    gitRepositoryService.updateGitRepositories()
-    logger.info("Update repositories cache")
     versionService.initData()
-
-    logger.info("took " + (System.currentTimeMillis - start) + " ms to create cache")
   }
 }

@@ -14,7 +14,7 @@ class RepositoryController @Inject()(versionService: VersionService) extends Inj
   def index(name: String): Action[AnyContent] = Action { implicit request =>
     versionService.getRepository(name) match {
       case Some(repository) =>
-        val springBootData = SpringBootUtils.getSpringBootData(repository.repository.plugins, versionService.springBootDefaultData, versionService.springBootMasterData)
+        val springBootData = SpringBootUtils.getSpringBootData(repository.repository.plugins, versionService.data.springBootDefaultData, versionService.data.springBootMasterData)
         render {
           case Accepts.Json() => Ok(Json.toJson(repository))
           case _              => Ok(views.html.repository(repository, springBootData))

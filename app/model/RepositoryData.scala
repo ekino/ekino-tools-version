@@ -10,7 +10,9 @@ case class RepositoryData(
   localDependencies: Map[String, String],
   centralDependencies: Map[String, String],
   localPlugins: Map[String, String],
-  gradlePlugins: Map[String, String]
+  gradlePlugins: Map[String, String],
+  springBootDefaultData: SpringBootData,
+  springBootMasterData: SpringBootData
 ) {
 
   def getPluginsAndDependencies: Seq[AbstractDisplay] = {
@@ -26,6 +28,8 @@ object RepositoryData {
     Map.empty[String, String],
     Map.empty[String, String],
     Map.empty[String, String],
-    Map.empty[String, String]
+    Map.empty[String, String],
+    SpringBootData.noData,
+    SpringBootData.noData
   )
 }

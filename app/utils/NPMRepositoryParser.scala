@@ -22,7 +22,7 @@ object NPMRepositoryParser extends AbstractParser {
 
     val dependencies = buildFiles
       .map(getDependencies(_, folder))
-      .fold(Seq.empty[Dependency])((d1, d2) => d1 ++ d2)
+      .fold(Seq.empty[Dependency])(_ ++ _)
 
     Repository(folder.getName, groupName, dependencies, "NPM", Seq.empty[Plugin])
   }

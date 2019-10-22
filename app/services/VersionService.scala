@@ -3,8 +3,10 @@ package services
 import java.io.File
 
 import javax.inject.{Inject, Singleton}
-import model._
+import model.{Dependency, _}
 import play.api.{Configuration, Logger}
+import scalaz.concurrent.Task
+import utils.TaskHelper.gather
 import utils._
 
 /**
@@ -15,14 +17,11 @@ class VersionService @Inject()(configuration: Configuration,
                                gitRepositoryService: GitRepositoryService,
                                springBootVersionService: SpringBootVersionService) {
 
-  val springBootDefaultData: SpringBootData = springBootVersionService.computeSpringBootData(false)
-  val springBootMasterData: SpringBootData = springBootVersionService.computeSpringBootData(true)
-
   private val config = Config(configuration)
   private val parsers = Seq(YarnLockRepositoryParser, NPMRepositoryParser, SBTRepositoryParser, MavenRepositoryParser, GradleRepositoryParser)
   private val logger = Logger(classOf[VersionService])
 
-  @volatile private var data: RepositoryData = RepositoryData.noData
+  @volatile var data: RepositoryData = RepositoryData.noData
 
   /**
     * List all the projects to display.
@@ -76,30 +75,41 @@ class VersionService @Inject()(configuration: Configuration,
   /**
     * Initialize the data if needed.
     */
-  def initData(): Unit = {
+  def initData(): Task[_] = {
     val start = System.currentTimeMillis
-    data = fetchRepositories()
-    logger.info(s"data has been initialized in ${System.currentTimeMillis - start} ms")
+    fetchRepositories().map(repo => {
+      logger.info(s"data has been initialized in ${System.currentTimeMillis - start} ms")
+      data = repo
+    })
   }
 
   /**
     * Fetch repositories data as repository list, versions, dependencies ...
     */
-  def fetchRepositories(): RepositoryData = {
+  def fetchRepositories(): Task[RepositoryData] = {
     logger.info("Processing... this will take few seconds")
 
     val workspace: File = new File(config.filePath)
-    if (!workspace.exists) {
-      gitRepositoryService.updateGitRepositories()
-    }
-
-    val repositories = findRepositories(workspace)
-    val (localDependencies, centralDependencies) = computeDependencyVersions(repositories)
-    val (localPlugins, gradlePlugins) = computePluginVersions(repositories)
-    val plugins = computePlugins(repositories, localPlugins)
-    val dependencies = computeDependencies(repositories, centralDependencies)
-
-    RepositoryData(repositories, dependencies, plugins, localDependencies, centralDependencies, localPlugins, gradlePlugins)
+    for {
+      _ <- gitRepositoryService.updateGitRepositories()
+      springBootDefaultData <- springBootVersionService.computeSpringBootData(false)
+      springBootMasterData  <- springBootVersionService.computeSpringBootData(true)
+      repositories <- Task.now(findRepositories(workspace, springBootDefaultData, springBootMasterData))
+      dependencyVersions <- computeDependencyVersions(repositories)
+      pluginVersions <- computePluginVersions(repositories)
+      plugins <- computePlugins(repositories, pluginVersions._2)
+      dependencies <- computeDependencies(repositories, dependencyVersions._2)
+    } yield RepositoryData(
+      repositories,
+      dependencies,
+      plugins,
+      dependencyVersions._1,
+      dependencyVersions._2,
+      pluginVersions._1,
+      pluginVersions._2,
+      springBootDefaultData,
+      springBootMasterData
+    )
   }
 
   /**
@@ -108,18 +118,18 @@ class VersionService @Inject()(configuration: Configuration,
     * @param directory the current directory
     * @return the repositories
     */
-  private def findRepositories(directory: File): Seq[Repository] = {
+  private def findRepositories(directory: File, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Seq[Repository] = {
     val files = directory.listFiles
     if (files.exists(_.isFile)) {
-      parseRepository(directory).toSeq
+      parseRepository(directory, springBootDefaultData, springBootMasterData).toSeq
     } else {
       files
-        .flatMap(findRepositories)
+        .flatMap(findRepositories(_, springBootDefaultData, springBootMasterData))
         .toSeq
     }
   }
 
-  private def parseRepository(projectFolder: File): Option[Repository] = {
+  private def parseRepository(projectFolder: File, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
     parsers
       .filter(_.canProcess(projectFolder))
       .map(_.buildRepository(projectFolder, projectFolder.getParentFile.getName, springBootDefaultData, springBootMasterData))
@@ -136,22 +146,18 @@ class VersionService @Inject()(configuration: Configuration,
   /**
     * Compute local plugin versions.
     */
-  private def computePluginVersions(repositories: Seq[Repository]): (Map[String, String], Map[String, String]) = {
+  private def computePluginVersions(repositories: Seq[Repository]): Task[(Map[String, String], Map[String, String])] = {
     val plugins = repositories
       .flatMap(_.plugins)
       .groupBy(_.name)
       .mapValues(seq => seq.map(_.version).max(VersionComparator))
 
-    val localPluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenLocalPlugins))
-    val gradlePluginFutures = plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenGradlePlugins))
+    val pluginVersions = for {
+      localPlugins <- gather(plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenLocalPlugins)))
+      gradlePlugins <- gather(plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenGradlePlugins)))
+    } yield localPlugins ++ gradlePlugins
 
-    val list = FutureHelper.await[(String, String)](localPluginFutures ++ gradlePluginFutures, configuration, "timeout.compute-plugins")
-
-    val result = list
-      .groupBy(_._1)
-      .map(p => getPluginId(p._1) -> p._2.map(_._2).max(VersionComparator))
-
-    (plugins, result)
+    pluginVersions.map(list => (plugins, list.groupBy(_._1).map(p => getPluginId(p._1) -> p._2.map(_._2).max(VersionComparator))))
   }
 
   private def getPluginCoordinates(pluginId: String): String = {
@@ -173,25 +179,29 @@ class VersionService @Inject()(configuration: Configuration,
   /**
     * Compute local and central versions.
     */
-  private def computeDependencyVersions(repositories: Seq[Repository]): (Map[String, String], Map[String, String]) = {
+  private def computeDependencyVersions(repositories: Seq[Repository]): Task[(Map[String, String], Map[String, String])] = {
     val dependencyMap: Map[String, Seq[Dependency]] = repositories
       .flatMap(_.dependencies)
       .groupBy(_.name)
 
-    val localDependencyFutures = dependencyMap.filter(e => isJvmDependencies(e._2)).keys.map(MavenVersionFetcher.getLatestVersion(_, config.mavenLocal))
-    val centralDependencyFutures = dependencyMap.filter(e => isJvmDependencies(e._2)).keys.map(MavenVersionFetcher.getLatestVersion(_, config.mavenCentral))
-    val npmDependencyFutures = dependencyMap.filter(e => isNodeDependencies(e._2)).keys.map(NpmVersionFetcher.getLatestVersion(_, config.npmRegistry))
+    val dependencyVersions = for {
+      localDependencies   <- filterDependencyMap(dependencyMap, config.mavenLocal, isJvmDependencies)
+      centralDependencies <- filterDependencyMap(dependencyMap, config.mavenCentral, isJvmDependencies)
+      npmDependencies     <- filterDependencyMap(dependencyMap, config.npmRegistry, isNodeDependencies, NpmVersionFetcher)
+    } yield centralDependencies ++ localDependencies ++ npmDependencies
 
-    val list = FutureHelper.await[(String, String)](centralDependencyFutures ++ localDependencyFutures ++ npmDependencyFutures, configuration, "timeout.compute-plugins")
-
-    (dependencyMap.mapValues(seq => seq.map(_.version).max(VersionComparator)),
-      list.groupBy(_._1).mapValues(seq => seq.map(_._2).max(VersionComparator)))
+    dependencyVersions.map(list =>
+      (
+        dependencyMap.mapValues(seq => seq.map(_.version).max(VersionComparator)),
+        list.groupBy(_._1).mapValues(seq => seq.map(_._2).max(VersionComparator))
+      )
+    )
   }
 
   /**
     * Compute plugin map from repositories
     */
-  private def computePlugins(repositories: Seq[Repository], localPlugins: Map[String, String]): Seq[DisplayPlugin] = {
+  private def computePlugins(repositories: Seq[Repository], localPlugins: Map[String, String]): Task[Seq[DisplayPlugin]] = Task {
     repositories
       .flatMap(repo => repo.plugins.map((_, repo.name)))                    // Extract all the (plugin, project name) tuples
       .groupBy(_._1.name)                                                   // Group by name
@@ -206,7 +216,7 @@ class VersionService @Inject()(configuration: Configuration,
   /**
     * Compute dependency map from repositories
     */
-  private def computeDependencies(repositories: Seq[Repository], centralDependencies: Map[String, String]): Seq[DisplayDependency] = {
+  private def computeDependencies(repositories: Seq[Repository], centralDependencies: Map[String, String]): Task[Seq[DisplayDependency]] = Task {
     repositories
       .flatMap(repo => repo.dependencies.map((_, repo.name)))                     // Extract all the (dependency, project name) tuples
       .groupBy(_._1.name)                                                         // Group by dependency name
@@ -220,4 +230,6 @@ class VersionService @Inject()(configuration: Configuration,
 
   private def isJvmDependencies(dependencies: Seq[Dependency]) = dependencies.forall(_.isInstanceOf[JvmDependency])
   private def isNodeDependencies(dependencies: Seq[Dependency]) = dependencies.forall(_.isInstanceOf[NodeDependency])
+  private def filterDependencyMap(map: Map[String, Seq[Dependency]], site: Site, filters: Seq[Dependency] => Boolean, fetcher: VersionFetcher = MavenVersionFetcher) =
+    gather(map.filter(p => filters.apply(p._2)).keys.map(fetcher.getLatestVersion(_, site)))
 }
