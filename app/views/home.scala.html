@@ -30,7 +30,8 @@
                 </div>
 
                 <div class="col-6">
-                    <a class="btn btn-danger btn-sm float-right" href="@routes.HomeController.clearCache()">Clear cache</a>
+                    <img id="loaderImg" src='@routes.Assets.at("images/loader.svg")' alt="loader" class="float-right loader"/>
+                    <button id="clearButton" class="btn btn-danger btn-sm float-right" onclick="clearCache('@routes.HomeController.clearCache()')">Clear cache</button>
                 </div>
             </div>
 

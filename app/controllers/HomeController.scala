@@ -1,19 +1,18 @@
 package controllers
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
+import akka.stream.Materializer
 import akka.util.Timeout
 import javax.inject.{Inject, Named}
-import job.{UpdateMessage, UpdateWithResponseMessage}
-import model.CustomExecutionContext._
+import job.{UpdateMessage, UpdateWithResponseMessage, WebSocketActor}
 import play.api.ConfigLoader.stringLoader
 import play.api.libs.json.Json
+import play.api.libs.streams.ActorFlow
 import play.api.mvc._
 import play.api.{ConfigLoader, Configuration}
 import services.VersionService
 import utils.Formatters._
-
-import scala.concurrent.Future
 
 /**
   * Main controller of repositories.
@@ -22,7 +21,7 @@ class HomeController @Inject()(
   versionService: VersionService,
   configuration: Configuration,
   @Named("updater-actor") val updaterActor: ActorRef
-) extends InjectedController {
+)(implicit system: ActorSystem, mat: Materializer) extends InjectedController {
 
   /**
     * List all the repositories.
@@ -37,20 +36,8 @@ class HomeController @Inject()(
   }
 
   /**
-    * Clear the cache with an asynchronous action.
-    * @return the home Action (redirect)
+    * Clear the cache with a websocket message.
+    * @return the result
     */
-  def clearCache: Action[AnyContent] = Action.async {
-    val synchronousClearCache = configuration.get[Boolean]("synchronous-clear-cache")
-    val redirect = Redirect(configuration.get("play.http.context"))
-    if (synchronousClearCache) {
-      val timeout = configuration.get("timeout.clear-cache")(ConfigLoader.finiteDurationLoader)
-      ask(updaterActor, UpdateWithResponseMessage)(Timeout(timeout))
-        .map(_ => redirect)
-    } else {
-      updaterActor ! UpdateMessage
-      Future.successful(redirect)
-    }
-  }
-
+  def clearCache: WebSocket = WebSocket.accept[String, String] { _ => ActorFlow.actorRef { _ => WebSocketActor.props(updaterActor) } }
 }

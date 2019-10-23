@@ -68,3 +68,13 @@ function activateTab(projectName) {
         nav.classList.add('active');
     }
 }
+
+function clearCache(path) {
+    document.getElementById('loaderImg').style.display = 'block';
+    document.getElementById('clearButton').style.display = 'none';
+
+    const wsUrl = window.location.origin.replace('http', 'ws') + path;
+    const socket = new WebSocket(wsUrl);
+    socket.onopen = () => socket.send("Clear cache");
+    socket.onclose = () => window.location.reload();
+}

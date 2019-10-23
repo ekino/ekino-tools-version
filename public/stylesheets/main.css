@@ -56,3 +56,8 @@ body {
 .springboot-down a span {
     color: #878787;
 }
+
+img.loader  {
+    height: 2em;
+    display: none;
+}
