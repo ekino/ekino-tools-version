@@ -14,8 +14,7 @@ import utils._
   */
 @Singleton
 class VersionService @Inject()(configuration: Configuration,
-                               gitRepositoryService: GitRepositoryService,
-                               springBootVersionService: SpringBootVersionService) {
+                               gitRepositoryService: GitRepositoryService) {
 
   private val config = Config(configuration)
   private val parsers = Seq(YarnLockRepositoryParser, NPMRepositoryParser, SBTRepositoryParser, MavenRepositoryParser, GradleRepositoryParser)
@@ -92,9 +91,7 @@ class VersionService @Inject()(configuration: Configuration,
     val workspace: File = new File(config.filePath)
     for {
       _ <- gitRepositoryService.updateGitRepositories()
-      springBootDefaultData <- springBootVersionService.computeSpringBootData(false)
-      springBootMasterData  <- springBootVersionService.computeSpringBootData(true)
-      repositories <- Task.now(findRepositories(workspace, springBootDefaultData, springBootMasterData))
+      repositories <- Task.now(findRepositories(workspace))
       dependencyVersions <- computeDependencyVersions(repositories)
       pluginVersions <- computePluginVersions(repositories)
       plugins <- computePlugins(repositories, pluginVersions._2)
@@ -106,9 +103,7 @@ class VersionService @Inject()(configuration: Configuration,
       dependencyVersions._1,
       dependencyVersions._2,
       pluginVersions._1,
-      pluginVersions._2,
-      springBootDefaultData,
-      springBootMasterData
+      pluginVersions._2
     )
   }
 
@@ -118,21 +113,21 @@ class VersionService @Inject()(configuration: Configuration,
     * @param directory the current directory
     * @return the repositories
     */
-  private def findRepositories(directory: File, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Seq[Repository] = {
+  private def findRepositories(directory: File): Seq[Repository] = {
     val files = directory.listFiles
     if (files.exists(_.isFile)) {
-      parseRepository(directory, springBootDefaultData, springBootMasterData).toSeq
+      parseRepository(directory).toSeq
     } else {
       files
-        .flatMap(findRepositories(_, springBootDefaultData, springBootMasterData))
+        .flatMap(findRepositories)
         .toSeq
     }
   }
 
-  private def parseRepository(projectFolder: File, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Option[Repository] = {
+  private def parseRepository(projectFolder: File): Option[Repository] = {
     parsers
       .filter(_.canProcess(projectFolder))
-      .map(_.buildRepository(projectFolder, projectFolder.getParentFile.getName, springBootDefaultData, springBootMasterData))
+      .map(_.buildRepository(projectFolder, projectFolder.getParentFile.getName))
       .reduceOption((r1, r2) => r1.copy(
         dependencies = r1.dependencies ++ r2.dependencies,
         toolVersion = r1.toolVersion + "/" + r2.toolVersion,

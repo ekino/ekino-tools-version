@@ -1,6 +1,7 @@
 package utils
 
-import model.{Plugin, SpringBootData, Dependency}
+import model.{Dependency, Plugin, SpringBootData}
+import services.SpringBootVersionService
 
 import scala.collection.immutable.ListMap
 
@@ -25,12 +26,11 @@ object SpringBootUtils {
     result.result()
   }
 
-  def getSpringBootData(plugins: Seq[Plugin], springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): SpringBootData = {
+  def getSpringBootData(plugins: Seq[Plugin]): SpringBootData = {
     plugins
       .find(_.name.contains("org.springframework.boot"))
-      .filter(_.name.startsWith("1."))
-      .map(_ => springBootDefaultData)
-      .getOrElse(springBootMasterData)
+      .map(plugin => SpringBootVersionService.springBootData(plugin.version))
+      .getOrElse(SpringBootData.noData)
   }
 
 }

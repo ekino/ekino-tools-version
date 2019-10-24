@@ -20,7 +20,7 @@ object SBTRepositoryParser extends AbstractParser {
   val scala2Regex: Regex = """(2.\d+).*""".r
   private val logger = Logger(SBTRepositoryParser.getClass)
 
-  override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
+  override def buildRepository(folder: File, groupName: String): Repository = {
     // project files
     val buildFile = getBuildFiles(folder).head
 

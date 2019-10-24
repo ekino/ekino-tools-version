@@ -16,7 +16,7 @@ object NPMRepositoryParser extends AbstractParser {
   private val lockFileName = "package-lock.json"
   private val npmVersion = """[~<>=v^]*(.*)""".r
 
-  override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
+  override def buildRepository(folder: File, groupName: String): Repository = {
     // project files
     val buildFiles = getBuildFiles(folder)
 

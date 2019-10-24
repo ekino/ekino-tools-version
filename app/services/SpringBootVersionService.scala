@@ -6,6 +6,7 @@ import javax.inject.{Inject, Singleton}
 import model.SpringBootData
 import play.api.ConfigLoader.stringLoader
 import play.api.{Configuration, Logger}
+import scalaz.Memo
 import scalaz.concurrent.Task
 
 import scala.collection.immutable.ListMap
@@ -15,18 +16,18 @@ import scala.xml.XML
 /**
   * Download spring boot pom file to check if a dependency is managed by springboot.
   */
-@Singleton
-class SpringBootVersionService @Inject()(configuration: Configuration) {
+object SpringBootVersionService {
 
   private val propertyRegex = """\$\{(.*)\}""".r
-  private val logger = Logger(classOf[SpringBootVersionService])
+  private val baseSpringbootPomUrl = "https://raw.githubusercontent.com/spring-projects/spring-boot/v"
+  private val pomPath = "/spring-boot-dependencies/pom.xml"
 
-  def computeSpringBootData(master: Boolean): Task[SpringBootData] = Task {
-    if (master) {
-      getData(configuration.get("github.springboot.master-url"))
-    } else {
-      getData(configuration.get("github.springboot.url"))
-    }
+  private val logger = Logger(SpringBootVersionService.getClass)
+
+  val springBootData: String => SpringBootData = Memo.immutableHashMapMemo {
+    case version: String if version.startsWith("1.") => getData(s"$baseSpringbootPomUrl$version$pomPath")
+    case version: String if version.startsWith("2.") => getData(s"$baseSpringbootPomUrl$version/spring-boot-project$pomPath")
+    case _                                           => SpringBootData.noData
   }
 
   private def getData(url: String) = {
