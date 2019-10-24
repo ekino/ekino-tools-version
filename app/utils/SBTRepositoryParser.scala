@@ -2,8 +2,10 @@ package utils
 
 import java.io.File
 
-import model.{JvmDependency, Plugin, Repository, SpringBootData}
+import executors.pool
+import model.{JvmDependency, Plugin, Repository}
 import play.api.Logger
+import scalaz.concurrent.Task
 
 import scala.util.matching.Regex
 
@@ -20,7 +22,7 @@ object SBTRepositoryParser extends AbstractParser {
   val scala2Regex: Regex = """(2.\d+).*""".r
   private val logger = Logger(SBTRepositoryParser.getClass)
 
-  override def buildRepository(folder: File, groupName: String): Repository = {
+  override def buildRepository(folder: File, groupName: String): Task[Repository] = Task {
     // project files
     val buildFile = getBuildFiles(folder).head
 

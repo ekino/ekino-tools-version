@@ -2,8 +2,10 @@ package utils
 
 import java.io.File
 
+import executors.pool
 import model._
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import scalaz.concurrent.Task
 
 import scala.util.matching.Regex
 
@@ -16,7 +18,7 @@ object NPMRepositoryParser extends AbstractParser {
   private val lockFileName = "package-lock.json"
   private val npmVersion = """[~<>=v^]*(.*)""".r
 
-  override def buildRepository(folder: File, groupName: String): Repository = {
+  override def buildRepository(folder: File, groupName: String): Task[Repository] = Task {
     // project files
     val buildFiles = getBuildFiles(folder)
 

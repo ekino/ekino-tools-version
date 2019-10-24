@@ -2,6 +2,7 @@ package services
 
 import java.io.FileNotFoundException
 
+import executors.pool
 import model.Site
 import play.api.Logger
 import scalaz.concurrent.Task

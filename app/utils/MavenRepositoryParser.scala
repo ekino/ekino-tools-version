@@ -2,7 +2,9 @@ package utils
 
 import java.io.File
 
+import executors.pool
 import model._
+import scalaz.concurrent.Task
 
 import scala.util.matching.Regex
 
@@ -20,7 +22,7 @@ object MavenRepositoryParser extends AbstractParser {
   val mavenVersionRegex: Regex = """.*apache-maven-([0-9.-]+)-.*""".r
   val pluginRegex: Regex = """\s*<plugin>\n\s*<groupId>([a-zA-Z0-9.-]+)</groupId>\n\s*<artifactId>([a-zA-Z0-9.-]+)</artifactId>\n\s*<version>(?:\$\{)?([a-zA-Z0-9.-]+)(\})?</version>""".r
 
-  override def buildRepository(folder: File, groupName: String): Repository = {
+  override def buildRepository(folder: File, groupName: String): Task[Repository] = Task {
     // project files
     val repositoryPath = folder.getPath
     val buildFiles = getBuildFiles(folder)

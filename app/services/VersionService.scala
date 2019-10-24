@@ -2,6 +2,7 @@ package services
 
 import java.io.File
 
+import executors.pool
 import javax.inject.{Inject, Singleton}
 import model.{Dependency, _}
 import play.api.{Configuration, Logger}
@@ -14,7 +15,7 @@ import utils._
   */
 @Singleton
 class VersionService @Inject()(configuration: Configuration,
-                               gitRepositoryService: GitRepositoryService) {
+  gitRepositoryService: GitRepositoryService) {
 
   private val config = Config(configuration)
   private val parsers = Seq(YarnLockRepositoryParser, NPMRepositoryParser, SBTRepositoryParser, MavenRepositoryParser, GradleRepositoryParser)
@@ -91,7 +92,7 @@ class VersionService @Inject()(configuration: Configuration,
     val workspace: File = new File(config.filePath)
     for {
       _ <- gitRepositoryService.updateGitRepositories()
-      repositories <- Task.now(findRepositories(workspace))
+      repositories <- findRepositories(workspace)
       dependencyVersions <- computeDependencyVersions(repositories)
       pluginVersions <- computePluginVersions(repositories)
       plugins <- computePlugins(repositories, pluginVersions._2)
@@ -113,29 +114,30 @@ class VersionService @Inject()(configuration: Configuration,
     * @param directory the current directory
     * @return the repositories
     */
-  private def findRepositories(directory: File): Seq[Repository] = {
+  private def findRepositories(directory: File): Task[Seq[Repository]] = {
     val files = directory.listFiles
     if (files.exists(_.isFile)) {
-      parseRepository(directory).toSeq
+      parseRepository(directory).map(_.toSeq)
     } else {
-      files
-        .flatMap(findRepositories)
-        .toSeq
+      gather(files.map(findRepositories)).map(_.flatten)
     }
   }
 
-  private def parseRepository(projectFolder: File): Option[Repository] = {
-    parsers
+  private def parseRepository(projectFolder: File): Task[Option[Repository]] = {
+    gather(parsers
       .filter(_.canProcess(projectFolder))
-      .map(_.buildRepository(projectFolder, projectFolder.getParentFile.getName))
-      .reduceOption((r1, r2) => r1.copy(
-        dependencies = r1.dependencies ++ r2.dependencies,
-        toolVersion = r1.toolVersion + "/" + r2.toolVersion,
-        plugins = r1.plugins ++ r2.plugins))
-      .filter(repo => repo.dependencies.nonEmpty || repo.plugins.nonEmpty)
-      .map(r => r.copy(
-        dependencies = r.dependencies.sortBy(d => (d.subfolder, d.getType, d.name)),
-        plugins = r.plugins.sortBy(p => (p.getType, p.name))))
+      .map(_.buildRepository(projectFolder, projectFolder.getParentFile.getName)))
+      .map(list => list
+        .reduceOption((r1, r2) => r1.copy(
+          dependencies = r1.dependencies ++ r2.dependencies,
+          toolVersion = r1.toolVersion + "/" + r2.toolVersion,
+          plugins = r1.plugins ++ r2.plugins))
+        .filter(repo => repo.dependencies.nonEmpty || repo.plugins.nonEmpty)
+        .map(r => r.copy(
+          dependencies = r.dependencies.sortBy(d => (d.subfolder, d.getType, d.name)),
+          plugins = r.plugins.sortBy(p => (p.getType, p.name)))
+        )
+      )
   }
 
   /**

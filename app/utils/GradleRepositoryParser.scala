@@ -2,8 +2,10 @@ package utils
 
 import java.io.File
 
+import executors.pool
 import model._
 import play.api.Logger
+import scalaz.concurrent.Task
 
 import scala.util.matching.Regex
 
@@ -38,7 +40,7 @@ object GradleRepositoryParser extends AbstractParser {
     """['"]?([_a-zA-Z0-9.-]+)['"]?""").r
   private val logger = Logger(GradleRepositoryParser.getClass)
 
-  override def buildRepository(folder: File, groupName: String): Repository = {
+  override def buildRepository(folder: File, groupName: String): Task[Repository] = Task {
     // project files
     val repositoryPath = folder.getPath
     val buildFiles = getBuildFiles(folder)

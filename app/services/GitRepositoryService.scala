@@ -2,6 +2,7 @@ package services
 
 import java.io.File
 
+import executors.pool
 import javax.inject.{Inject, Singleton}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.RefNotAdvertisedException

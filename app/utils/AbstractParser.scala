@@ -3,8 +3,9 @@ package utils
 import java.io.{File, IOException}
 import java.nio.file.Files
 
-import model.{Repository, SpringBootData}
+import model.Repository
 import play.api.Logger
+import scalaz.concurrent.Task
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListMap
@@ -33,7 +34,7 @@ abstract class AbstractParser {
   def canProcess(repository: File): Boolean =
     getBuildFiles(repository).exists(_.exists())
 
-  def buildRepository(folder: File, groupName: String): Repository
+  def buildRepository(folder: File, groupName: String): Task[Repository]
 
   // read a file and extract lines matching a pattern
   protected def extractFromFile[T](file: File, regex: Regex, extract: ExtractGroups[T]): Map[String, T] = {
