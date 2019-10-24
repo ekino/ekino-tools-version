@@ -33,7 +33,7 @@ abstract class AbstractParser {
   def canProcess(repository: File): Boolean =
     getBuildFiles(repository).exists(_.exists())
 
-  def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository
+  def buildRepository(folder: File, groupName: String): Repository
 
   // read a file and extract lines matching a pattern
   protected def extractFromFile[T](file: File, regex: Regex, extract: ExtractGroups[T]): Map[String, T] = {

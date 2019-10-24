@@ -16,7 +16,7 @@ object YarnLockRepositoryParser extends AbstractParser {
   private val versionValue = """[.\da-zA-Z-]+""".r
   val extractYarnDependency: ExtractGroups[YarnDependency] = matchData => matchData.group(1) -> YarnDependency(matchData.group(3), matchData.group(2))
 
-  override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
+  override def buildRepository(folder: File, groupName: String): Repository = {
     // project files
     val buildFiles = getBuildFiles(folder)
 
@@ -30,7 +30,7 @@ object YarnLockRepositoryParser extends AbstractParser {
   private def getDependencies(buildFile: File, folder: File, groupName: String): Seq[Dependency] = {
     val subfolder = getSubfolder(buildFile, folder)
 
-    val npmArtifacts: Seq[Dependency] = NPMRepositoryParser.buildRepository(buildFile.getParentFile, groupName, SpringBootData.noData, SpringBootData.noData)
+    val npmArtifacts: Seq[Dependency] = NPMRepositoryParser.buildRepository(buildFile.getParentFile, groupName)
       .dependencies
 
     extractFromFile(buildFile, yarnVersion, extractYarnDependency)

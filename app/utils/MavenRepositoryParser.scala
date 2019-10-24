@@ -20,7 +20,7 @@ object MavenRepositoryParser extends AbstractParser {
   val mavenVersionRegex: Regex = """.*apache-maven-([0-9.-]+)-.*""".r
   val pluginRegex: Regex = """\s*<plugin>\n\s*<groupId>([a-zA-Z0-9.-]+)</groupId>\n\s*<artifactId>([a-zA-Z0-9.-]+)</artifactId>\n\s*<version>(?:\$\{)?([a-zA-Z0-9.-]+)(\})?</version>""".r
 
-  override def buildRepository(folder: File, groupName: String, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData): Repository = {
+  override def buildRepository(folder: File, groupName: String): Repository = {
     // project files
     val repositoryPath = folder.getPath
     val buildFiles = getBuildFiles(folder)
@@ -29,13 +29,13 @@ object MavenRepositoryParser extends AbstractParser {
     val mavenVersion = extractFromFile(new File(repositoryPath, mavenWrapperFileName), mavenVersionRegex, extractValue).getOrElse("value", "")
 
     val dependencies = buildFiles
-      .map(getDependencies(_, folder, springBootDefaultData, springBootMasterData, defaultProperties))
+      .map(getDependencies(_, folder, defaultProperties))
       .reduce((r1, r2) => (r1._1 ++ r2._1, r1._2 ++ r2._2))
 
     Repository(folder.getName, groupName, dependencies._1, s"Maven $mavenVersion", dependencies._2)
   }
 
-  private def getDependencies(buildFile: File, folder: File, springBootDefaultData: SpringBootData, springBootMasterData: SpringBootData, defaultProperties: Map[String, String]): (Seq[Dependency], Seq[Plugin]) = {
+  private def getDependencies(buildFile: File, folder: File, defaultProperties: Map[String, String]): (Seq[Dependency], Seq[Plugin]) = {
     val subfolder = getSubfolder(buildFile, folder)
     val otherProperties = extractFromFile(buildFile, propertyRegex, extractProperties)
     val properties = defaultProperties ++ otherProperties
@@ -49,7 +49,7 @@ object MavenRepositoryParser extends AbstractParser {
       .map(p => MavenPlugin(p._1, p._2))
       .toSeq
 
-    val springBootData = SpringBootUtils.getSpringBootData(plugins, springBootDefaultData, springBootMasterData)
+    val springBootData = SpringBootUtils.getSpringBootData(plugins)
     val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
       .map(p => JvmDependency(p._1, p._2, subfolder))
       .toSeq
