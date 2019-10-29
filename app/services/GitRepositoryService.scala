@@ -1,6 +1,8 @@
 package services
 
 import java.io.File
+import java.nio.file.Files
+import java.util.Comparator
 
 import executors.pool
 import javax.inject.{Inject, Singleton}
@@ -84,7 +86,9 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     } catch {
       // empty repository
       case _: RefNotAdvertisedException => logger.warn(s"Skipping repository $repositoryUrl (empty repository)")
-      case e: Exception => logger.error(s"Skipping repository $repositoryUrl", e)
+      case e: Exception =>
+        logger.error(s"Skipping repository $repositoryUrl", e)
+        repositoryDirectory.deleteRecursively()
     }
   }
 
@@ -124,5 +128,11 @@ class GitRepositoryService @Inject()(configuration: Configuration,
 
   private def getUserCredentials(repository: GitRepository) = {
     new UsernamePasswordCredentialsProvider(repository.user, repository.token)
+  }
+
+  private implicit class FileExtension(file: File) {
+    def deleteRecursively(): Unit = Files.walk(file.toPath)
+      .sorted(Comparator.reverseOrder())
+      .forEach(path => path.toFile.delete())
   }
 }

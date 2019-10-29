@@ -4,13 +4,13 @@ import akka.actor.Actor
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import scalaz.concurrent.Task
-import services.{GitRepositoryService, VersionService}
+import services.VersionService
 
 /**
   * Updater Actor that clear the cache.
   */
 @Singleton
-class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryService: GitRepositoryService) extends Actor {
+class UpdaterActor @Inject()(versionService: VersionService) extends Actor {
 
   private val logger = Logger(classOf[UpdaterActor])
 
@@ -26,7 +26,7 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
     if (versionService.noData) {
       versionService.initData()
     } else {
-      Task.now(null)
+      Task.now(())
     }
 
   def update(): Task[_] = {
