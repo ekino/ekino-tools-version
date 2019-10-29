@@ -1,16 +1,14 @@
 package controllers
 
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.pattern.ask
+import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.Materializer
-import akka.util.Timeout
 import javax.inject.{Inject, Named}
-import job.{UpdateMessage, UpdateWithResponseMessage, WebSocketActor}
-import play.api.ConfigLoader.stringLoader
+import job.WebSocketActor
+import model.RepositoryData
+import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
-import play.api.{ConfigLoader, Configuration}
 import services.VersionService
 import utils.Formatters._
 
@@ -36,8 +34,16 @@ class HomeController @Inject()(
   }
 
   /**
-    * Clear the cache with a websocket message.
-    * @return the result
+    * Allows to share messages using websockets.
+    * @return the message result
     */
-  def clearCache: WebSocket = WebSocket.accept[String, String] { _ => ActorFlow.actorRef { _ => WebSocketActor.props(updaterActor) } }
+  def websocket: WebSocket = WebSocket.accept[String, String] { _ => ActorFlow.actorRef { _ => WebSocketActor.props(updaterActor) } }
+
+  /**
+    * Checks that the data is initialized.
+    * @return true or false as json
+    */
+  def initialized: Action[AnyContent] = Action {
+    Ok(Json.toJson(versionService.data != RepositoryData.noData))
+  }
 }

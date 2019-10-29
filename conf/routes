@@ -4,7 +4,8 @@
 
 # Home page
 GET     /                           controllers.HomeController.index
-GET     /clear-cache                controllers.HomeController.clearCache
+GET     /websocket                  controllers.HomeController.websocket
+GET     /initialized                controllers.HomeController.initialized
 GET     /health                     controllers.HealthController.index
 GET     /repositories/:name         controllers.RepositoryController.index(name)
 GET     /dependencies               controllers.DependencyController.dependencies

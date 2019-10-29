@@ -15,10 +15,11 @@ class UpdaterActor @Inject()(versionService: VersionService, gitRepositoryServic
   private val logger = Logger(classOf[UpdaterActor])
 
   def receive: PartialFunction[Any, Unit] = {
-    case InitMessage =>                init().map(_ => sender() ! SuccessMessage).unsafePerformSync
-    case UpdateMessage =>              update().unsafePerformSync
-    case UpdateWithResponseMessage =>  update().map(_ => sender() ! SuccessMessage).unsafePerformSync
-    case message =>                    logger.error(s"Cannot process message: $message")
+    case InitMessage               => init().map(_ => sender() ! SuccessMessage).unsafePerformSync
+    case UpdateMessage             => update().unsafePerformSync
+    case UpdateWithResponseMessage => update().map(_ => sender() ! SuccessMessage).unsafePerformSync
+    case StatusMessage             => sender() ! SuccessMessage
+    case message                   => logger.error(s"Cannot process message: $message")
   }
 
   def init(): Task[_] =

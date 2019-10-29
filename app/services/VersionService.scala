@@ -228,5 +228,5 @@ class VersionService @Inject()(configuration: Configuration,
   private def isJvmDependencies(dependencies: Seq[Dependency]) = dependencies.forall(_.isInstanceOf[JvmDependency])
   private def isNodeDependencies(dependencies: Seq[Dependency]) = dependencies.forall(_.isInstanceOf[NodeDependency])
   private def filterDependencyMap(map: Map[String, Seq[Dependency]], site: Site, filters: Seq[Dependency] => Boolean, fetcher: VersionFetcher = MavenVersionFetcher) =
-    gather(map.filter(p => filters.apply(p._2)).keys.map(fetcher.getLatestVersion(_, site)))
+    gather(map.filter(p => filters(p._2)).keys.map(fetcher.getLatestVersion(_, site)))
 }

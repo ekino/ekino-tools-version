@@ -2,6 +2,7 @@ package model
 
 import utils.VersionComparator
 
+import scala.util.matching.Regex
 
 /**
   * Repository DTO.
@@ -86,8 +87,8 @@ case class DisplayRepository(
       .exists(_.equals(dependency))
   }
 
-  implicit class Regex(sc: StringContext) {
-    def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
+  implicit class RegexOps(sc: StringContext) {
+    def r = new Regex(sc.parts.mkString)
   }
 
   private[this] def getRepositoryType(name: String) = name match {

@@ -2,14 +2,15 @@ package job
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 
-class WebSocketActor(out: ActorRef) extends Actor {
+class WebSocketActor(updater: ActorRef) extends Actor {
 
   override def receive: PartialFunction[Any, Unit] = {
     case SuccessMessage => self ! PoisonPill
-    case _: String      => out ! UpdateWithResponseMessage
+    case "status"       => updater ! StatusMessage
+    case "clear"        => updater ! UpdateWithResponseMessage
   }
 }
 
 object WebSocketActor {
-  def props(out: ActorRef) = Props(new WebSocketActor(out))
+  def props(updater: ActorRef) = Props(new WebSocketActor(updater))
 }

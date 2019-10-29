@@ -25,13 +25,13 @@
             <div class="row mt-3 mb-3">
                 <div class="col-6">
                     <form class="form-inline" autocomplete="off">
-                        <input id="search-input" class="form-control" type="search" placeholder="Search..." />
+                        <label for="search-input"></label><input id="search-input" class="form-control" type="search" placeholder="Search..." />
                     </form>
                 </div>
 
                 <div class="col-6">
                     <img id="loaderImg" src='@routes.Assets.at("images/loader.svg")' alt="loader" class="float-right loader"/>
-                    <button id="clearButton" class="btn btn-danger btn-sm float-right" onclick="clearCache('@routes.HomeController.clearCache()')">Clear cache</button>
+                    <button id="clearButton" class="btn btn-danger btn-sm float-right" onclick="websocket('clear')">Clear cache</button>
                 </div>
             </div>
 

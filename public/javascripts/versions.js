@@ -1,12 +1,9 @@
 'use strict';
 
-const hslColorPercent = (percent, start, end) => {
-    //Return a CSS HSL string
-    const a = percent / 100, b = end * a, c = b + start;
-    return 'hsl(' + c + ',80%,50%)';
-};
+// Return a CSS HSL string
+const hslColorPercent = (percent, start, end) => `hsl(${start + (percent / 100) * end},80%,50%)`;
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.badge[data-color]').forEach(item => {
         const percent = item.getAttribute('data-color');
         item.style.backgroundColor = hslColorPercent(percent, 0, 120);
@@ -38,6 +35,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     activateTab();
+
+    const response = await fetch(`${window.location.origin}/initialized`);
+    const initialized = await response.json();
+    if (!initialized) {
+        websocket('status')
+    }
 }, false);
 
 function activateTab(projectName) {
@@ -69,12 +72,12 @@ function activateTab(projectName) {
     }
 }
 
-function clearCache(path) {
+function websocket(command) {
     document.getElementById('loaderImg').style.display = 'block';
     document.getElementById('clearButton').style.display = 'none';
 
-    const wsUrl = window.location.origin.replace('http', 'ws') + path;
+    const wsUrl = window.location.origin.replace('http', 'ws') + '/websocket';
     const socket = new WebSocket(wsUrl);
-    socket.onopen = () => socket.send("Clear cache");
+    socket.onopen = () => socket.send(command);
     socket.onclose = () => window.location.reload();
 }
