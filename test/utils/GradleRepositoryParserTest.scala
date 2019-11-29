@@ -101,6 +101,17 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
   }
 
   @Test
+  def should_parse_gradle_enforced_platform_dependencies() {
+    val prop = """ implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:2.2.1.RELEASE"))"""
+    val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
+
+    matchers should not be empty
+    matchers.group(1) shouldBe "org.springframework.boot"
+    matchers.group(2) shouldBe "spring-boot-dependencies"
+    matchers.group(3) shouldBe "2.2.1.RELEASE"
+  }
+
+  @Test
   def should_parse_plugins() {
     val prop = """ id 'com.ekino.base'   version '1.2.0' """
     val matchers = GradleRepositoryParser.pluginRegex.findAllIn(prop)
