@@ -22,6 +22,7 @@ object GradleRepositoryParser extends AbstractParser {
   val artifactRegex: Regex = ("""\s*""" +
     """(?:mavenBom|classpath|api|(?:i|testI|integrationTestI)mplementation|(?:c|testC|integrationTestC)ompile(?:Only)?|(?:r|testR|integrationTestR)untime(?:Only)?|(?:a|testA|integrationTestA)nnotationProcessor|play(?:Test)?)""" +
     """[\s(]*""" +
+    """(?:platform\()?""" +
     """(?:group\s*[:=]\s*)?""" +
     """\(?['"]""" +
     """(?<groupId>[_a-zA-Z0-9.-]+)""" +
