@@ -16,7 +16,7 @@ import scala.util.control.NonFatal
 object NpmVersionFetcher extends VersionFetcher {
 
   val ACCEPT = "Accept"
-  val NPM_JSON = "application/vnd.npm.install-v1+json"
+  val NPM_JSON = "application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"
   val DIST_TAGS = "dist-tags"
   val LATEST = "latest"
   private val logger = Logger(NpmVersionFetcher.getClass)
