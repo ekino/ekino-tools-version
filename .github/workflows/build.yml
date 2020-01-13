@@ -1,0 +1,27 @@
+name: Build and test
+on:
+  push:
+    branches:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache SBT ivy cache
+        uses: actions/cache@v1.1.0
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/build.sbt') }}
+      - name: Cache SBT
+        uses: actions/cache@v1.1.0
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+      - name: Setup java and sbt
+        uses: olafurpg/setup-scala@v7
+        with:
+          java-version: adopt@1.8
+      - name: Build and test
+        run: sbt test

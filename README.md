@@ -1,7 +1,5 @@
 # Ekino Tools Versions
 
-[![Build Status](https://travis-ci.org/ekino/ekino-tools-version.svg?branch=master)](https://travis-ci.org/ekino/ekino-tools-version)
-
 ## Description
 
 Tool that provides convenient version management webapp.
