@@ -31,9 +31,13 @@ class GitHub @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     */
   @tailrec
   private def fetchRepositoryUrls(user: String, page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
-    val url: String = s"https://api.github.com/users/$user/repos?access_token=$gitHubToken&per_page=100&page=$page"
+    val url: String = s"https://api.github.com/users/$user/repos?per_page=100&page=$page"
 
     val connection = new URL(url).openConnection
+    if (!gitHubToken.isEmpty) {
+      connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION, s"token $gitHubToken")
+    }
+
     val rawRepositories = Source.fromInputStream(connection.getInputStream).mkString
 
     // getting the project list of github user
