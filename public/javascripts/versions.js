@@ -54,7 +54,7 @@ function activateTab(projectName) {
 
     // Show the specific tab content
     let tab, nav;
-    const selectedTab = projectName || localStorage.getItem("selectedTab");
+    const selectedTab = projectName ?? localStorage.getItem("selectedTab");
     if (selectedTab) {
         tab = document.getElementById(`tab${selectedTab}`);
         nav = document.getElementById(`nav${selectedTab}`);
