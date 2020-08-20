@@ -26,7 +26,8 @@ object SpringBootVersionService {
 
   val springBootData: String => SpringBootData = Memo.immutableHashMapMemo {
     case version: String if version.startsWith("1.") => getData(s"$baseSpringbootPomUrl$version$pomPath")
-    case version: String if version.startsWith("2.") => getData(s"$baseSpringbootPomUrl$version/spring-boot-project$pomPath")
+    case version: String if version.startsWith("2.0") || version.startsWith("2.1")  || version.startsWith("2.2")
+      => getData(s"$baseSpringbootPomUrl$version/spring-boot-project$pomPath")
     case _                                           => SpringBootData.noData
   }
 
