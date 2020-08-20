@@ -127,6 +127,8 @@ release.properties
 # Icon must end with two \r
 Icon
 
+# direnv
+.envrc
 
 # Thumbnails
 ._*
