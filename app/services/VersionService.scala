@@ -92,7 +92,7 @@ class VersionService @Inject()(configuration: Configuration,
     val workspace: File = new File(config.filePath)
     for {
       _ <- gitRepositoryService.updateGitRepositories()
-      repositories <- findRepositories(workspace)
+      repositories <- findRepositories(workspace, config.localRepositories.map(new File(_)))
       dependencyVersions <- computeDependencyVersions(repositories)
       pluginVersions <- computePluginVersions(repositories)
       plugins <- computePlugins(repositories, pluginVersions._2)
@@ -114,12 +114,14 @@ class VersionService @Inject()(configuration: Configuration,
     * @param directory the current directory
     * @return the repositories
     */
-  private def findRepositories(directory: File): Task[Seq[Repository]] = {
+  private def findRepositories(directory: File, localRepositories: Seq[File] = Seq.empty): Task[Seq[Repository]] = {
     val files = directory.listFiles
-    if (files.exists(_.isFile)) {
+
+    if (files.exists(_.isFile) && localRepositories.isEmpty) {
       parseRepository(directory).map(_.toSeq)
     } else {
-      gather(files.map(findRepositories)).map(_.flatten)
+      val projects = if (files.exists(_.isFile)) localRepositories :+ directory else localRepositories ++ files
+      gather(projects.map(findRepositories(_))).map(_.flatten)
     }
   }
 
