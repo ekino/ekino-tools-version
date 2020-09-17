@@ -65,6 +65,16 @@ Test the application on url http://localhost:8080/
 You can also use sbt instead of gradle. It offers a better integration with intelliJ and allows debug.
 
 
+## Using local repositories
+If you do not want to clone the repositories with git you can also specify the local paths of the repositories :
+```
+project {
+    repositories{
+        local-paths = ["/path/to/repo1", "/path/to/repo2"]  
+    }
+}
+```
+
 ## Documentation
 
 * https://www.playframework.com/documentation/2.6.x/Home

@@ -27,7 +27,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
     * Update all the repositories.
     */
   def updateGitRepositories(): Task[_] = {
-    val path = new File(getProperty("project.repositories.path"))
+    val path = new File(getProperty("project.repositories.clone-path"))
     if (!path.exists()) {
       // creating workspace directory
       path.mkdirs()
@@ -54,7 +54,7 @@ class GitRepositoryService @Inject()(configuration: Configuration,
 
   private def updateGitRepository(repository: GitRepository, repositoryName: String): Task[_] = {
 
-    val repositoryDirectory = new File(getProperty("project.repositories.path"), repositoryName)
+    val repositoryDirectory = new File(getProperty("project.repositories.clone-path"), repositoryName)
 
     if (repositoryDirectory.exists()) {
       pullRepository(repository, repositoryDirectory)
