@@ -2,7 +2,7 @@ package utils
 
 import org.junit.Test
 import org.scalatest.Matchers
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.junit.AssertionsForJUnit
 
 class MavenRepositoryParserTest extends AssertionsForJUnit with Matchers  {
 
