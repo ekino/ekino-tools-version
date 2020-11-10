@@ -20,7 +20,7 @@ jobs:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
       - name: Setup java and sbt
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
         with:
           java-version: adopt@1.8
       - name: Build and test
