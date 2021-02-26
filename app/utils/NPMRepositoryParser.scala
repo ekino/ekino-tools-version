@@ -29,7 +29,7 @@ object NPMRepositoryParser extends AbstractParser {
     Repository(folder.getName, groupName, dependencies, "NPM", Seq.empty[Plugin])
   }
 
-  private def getDependencies(buildFile: File, folder: File): Seq[Dependency] = {
+  private def getDependencies(buildFile: File, folder: File): collection.Seq[Dependency] = {
     val subfolder = getSubfolder(buildFile, folder)
 
     val source = getFileAsString(buildFile)
@@ -45,7 +45,7 @@ object NPMRepositoryParser extends AbstractParser {
     if (resolvedDependencies.isEmpty) dependencies else resolvedDependencies.filter(d => dependencies.map(_.name).contains(d.name))
   }
 
-  private def getResolvedDependencies(lockFile: File, subfolder: String): Seq[NodeDependency] = {
+  private def getResolvedDependencies(lockFile: File, subfolder: String): collection.Seq[NodeDependency] = {
     if (lockFile.exists()) {
       Json.parse(getFileAsString(lockFile))
         .as[JsObject]
@@ -68,7 +68,7 @@ object NPMRepositoryParser extends AbstractParser {
     value
       .map(_.as[JsObject]
         .value
-        .mapValues(v => trimVersion(v.as[JsString].value)))
+        .view.mapValues(v => trimVersion(v.as[JsString].value)))
       .getOrElse(Map.empty)
       .toMap
 

@@ -149,7 +149,7 @@ class VersionService @Inject()(configuration: Configuration,
     val plugins = repositories
       .flatMap(_.plugins)
       .groupBy(_.name)
-      .mapValues(seq => seq.map(_.version).max(VersionComparator))
+      .view.mapValues(seq => seq.map(_.version).max(VersionComparator)).toMap
 
     val pluginVersions = for {
       localPlugins <- gather(plugins.keys.map(p => MavenVersionFetcher.getLatestVersion(getPluginCoordinates(p), config.mavenLocalPlugins)))
@@ -191,8 +191,8 @@ class VersionService @Inject()(configuration: Configuration,
 
     dependencyVersions.map(list =>
       (
-        dependencyMap.mapValues(seq => seq.map(_.version).max(VersionComparator)),
-        list.groupBy(_._1).mapValues(seq => seq.map(_._2).max(VersionComparator))
+        dependencyMap.view.mapValues(seq => seq.map(_.version).max(VersionComparator)).toMap,
+        list.groupBy(_._1).view.mapValues(seq => seq.map(_._2).max(VersionComparator)).toMap
       )
     )
   }
@@ -204,11 +204,11 @@ class VersionService @Inject()(configuration: Configuration,
     repositories
       .flatMap(repo => repo.plugins.map((_, repo.name)))                    // Extract all the (plugin, project name) tuples
       .groupBy(_._1.name)                                                   // Group by name
-      .mapValues(_.groupBy(_._1.version))                                   // Group by version
+      .view.mapValues(_.groupBy(_._1.version))                              // Group by version
       .map(p => DisplayPlugin.from(                                         // Create a DisplayPlugin with:
         repositories.flatMap(_.plugins).find(_.name == p._1).orNull,        // - the plugin name
         localPlugins.getOrElse(p._1, ""),                                   // - its latest released version
-        p._2.mapValues(_.map(_._2).toSet)))                                 // - all the projects using it by version
+        p._2.view.mapValues(_.map(_._2).toSet).toMap))                      // - all the projects using it by version
       .toSeq
   }
 
@@ -219,11 +219,11 @@ class VersionService @Inject()(configuration: Configuration,
     repositories
       .flatMap(repo => repo.dependencies.map((_, repo.name)))                     // Extract all the (dependency, project name) tuples
       .groupBy(_._1.name)                                                         // Group by dependency name
-      .mapValues(_.groupBy(_._1.version))                                         // Group by dependency version
+      .view.mapValues(_.groupBy(_._1.version))                                    // Group by dependency version
       .map(d => DisplayDependency.from(                                           // Create a DisplayDependency with:
         repositories.flatMap(_.dependencies).find(_.name == d._1).orNull,         // - the dependency name
         centralDependencies.getOrElse(d._1, ""),                                  // - its latest released version
-        d._2.mapValues(_.map(_._2).toSet)))                                       // - all the projects using it by version
+        d._2.view.mapValues(_.map(_._2).toSet).toMap))                            // - all the projects using it by version
       .toSeq
   }
 

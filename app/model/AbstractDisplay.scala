@@ -33,7 +33,7 @@ sealed abstract class AbstractDisplay(
     }
     val size = versions.values.flatten.size
     val count = versions
-      .filterKeys(VersionComparator.compare(_, latestVersion) >= 0)
+      .view.filterKeys(VersionComparator.compare(_, latestVersion) >= 0)
       .values.flatten.size
 
     val result = 100d * count / size
