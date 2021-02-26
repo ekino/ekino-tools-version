@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11:jdk-11.0.4_11 as builder
+FROM adoptopenjdk/openjdk11:jdk-11.0.10_9 as builder
 
 RUN jlink \
     --add-modules java.security.jgss,java.rmi,java.sql,java.desktop,jdk.crypto.ec,jdk.unsupported \
