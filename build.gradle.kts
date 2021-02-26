@@ -34,4 +34,5 @@ dependencies {
     implementation("org.scalaz:scalaz-concurrent_2.12:${property("scalaz.version")}")
 
     testImplementation("org.scalatestplus.play:scalatestplus-play_2.12:${property("scalatestplus-play_2.12.version")}")
+    testImplementation("org.scalatestplus:junit-4-13_2.13:${property("scalatestplus-junit-4-13.version")}")
 }
