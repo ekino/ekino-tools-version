@@ -46,7 +46,7 @@ case class DisplayRepository(
         dependency.version
       }
 
-      VersionComparator.compare(dependency.version, version).signum match {
+      VersionComparator.compare(dependency.version, version).sign match {
         case -1 => "springboot-down"
         case  0 => "springboot-equal"
         case  1 => "springboot-up"

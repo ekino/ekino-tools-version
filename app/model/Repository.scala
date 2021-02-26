@@ -5,6 +5,6 @@ package model
   */
 case class Repository(name: String,
                       group: String,
-                      dependencies: Seq[Dependency],
+                      dependencies: collection.Seq[Dependency],
                       toolVersion: String,
-                      plugins: Seq[Plugin])
+                      plugins: collection.Seq[Plugin])

@@ -28,11 +28,11 @@ play {
 dependencies {
     implementation("org.slf4j:slf4j-simple:${property("slf4j-simple.version")}")
     implementation("org.eclipse.jgit:org.eclipse.jgit:${property("org.eclipse.jgit.version")}")
-    implementation("com.typesafe.play:play-guice_2.12:${property("play.version")}")
-    implementation("com.typesafe.play:filters-helpers_2.12:${property("play.version")}")
-    implementation("net.codingwell:scala-guice_2.12:${property("scala-guice.version")}")
-    implementation("org.scalaz:scalaz-concurrent_2.12:${property("scalaz.version")}")
+    implementation("com.typesafe.play:play-guice_2.13:${property("play.version")}")
+    implementation("com.typesafe.play:filters-helpers_2.13:${property("play.version")}")
+    implementation("net.codingwell:scala-guice_2.13:${property("scala-guice.version")}")
+    implementation("org.scalaz:scalaz-concurrent_2.13:${property("scalaz.version")}")
 
-    testImplementation("org.scalatestplus.play:scalatestplus-play_2.12:${property("scalatestplus-play_2.12.version")}")
+    testImplementation("org.scalatestplus.play:scalatestplus-play_2.13:${property("scalatestplus-play_2.13.version")}")
     testImplementation("org.scalatestplus:junit-4-13_2.13:${property("scalatestplus-junit-4-13.version")}")
 }

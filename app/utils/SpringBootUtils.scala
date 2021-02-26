@@ -19,7 +19,7 @@ object SpringBootUtils {
       .flatten
       .toMap
 
-  def getSpringBootData(plugins: Seq[Plugin]): SpringBootData = {
+  def getSpringBootData(plugins: collection.Seq[Plugin]): SpringBootData = {
     plugins
       .find(_.name.contains("org.springframework.boot"))
       .map(plugin => SpringBootVersionService.springBootData(plugin.version))

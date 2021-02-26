@@ -7,7 +7,7 @@ import model.Repository
 import play.api.Logger
 import scalaz.concurrent.Task
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.immutable.ListMap
 import scala.io.Source
 import scala.util.matching.Regex
@@ -56,10 +56,10 @@ abstract class AbstractParser {
 
   // replace repository holder by value
   protected def replaceVersionsHolder(artifacts: Map[String, String], properties: Map[String, String]): Map[String, String] = {
-    // replace repository holders (i.e my-aterfact.version) by its value
+    // replace repository holders (i.e my-artifact.version) by its value
     ListMap(artifacts
       .toSeq
-      .map(p => if (properties.get(p._2).isDefined) p._1 -> properties(p._2) else p): _*)
+      .map(p => if (properties.contains(p._2)) p._1 -> properties(p._2) else p): _*)
   }
 
   def getFileAsString(file: File): String = {
