@@ -5,6 +5,9 @@
 .build-script/
 build/
 
+### SBT ###
+.bsp/
+
 # Ignore Gradle GUI config
 gradle-app.setting
 
