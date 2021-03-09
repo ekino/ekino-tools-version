@@ -13,7 +13,6 @@ gradleProperties := {
 
 libraryDependencies += guice
 libraryDependencies += filters
-libraryDependencies += "org.slf4j"               % "slf4j-simple"            % gradleProperties.value.getProperty("slf4j-simple.version")
 libraryDependencies += "org.eclipse.jgit"        % "org.eclipse.jgit"        % gradleProperties.value.getProperty("org.eclipse.jgit.version")
 libraryDependencies += "net.codingwell"         %% "scala-guice"             % gradleProperties.value.getProperty("scala-guice.version")
 libraryDependencies += "org.scalaz"             %% "scalaz-concurrent"       % gradleProperties.value.getProperty("scalaz.version")
