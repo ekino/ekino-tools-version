@@ -15,7 +15,7 @@ It provides 5 views:
 
 ## Requirements
 
-JDK 8 is required.
+JDK 11 is required.
 
 ## Run
 
