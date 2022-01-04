@@ -1,6 +1,6 @@
 package utils
 
-import java.io.{File, IOException}
+import java.io.{File, FileNotFoundException, IOException}
 import java.nio.file.Files
 
 import model.Repository
@@ -47,10 +47,12 @@ abstract class AbstractParser {
         .toSeq: _*
       )
     } catch {
-      case _: IOException =>
+      case _: FileNotFoundException =>
         logger.debug(s"Cannot find ${file.getName}")
         Map.empty[String, T]
-
+      case e: IOException =>
+        logger.warn(s"Cannot read ${file.getName}", e)
+        Map.empty[String, T]
     }
   }
 
