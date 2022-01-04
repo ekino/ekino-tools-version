@@ -30,7 +30,7 @@ class GitLab @Inject()(configuration: Configuration) extends AbstractGitHost("gi
     */
   @tailrec
   private def fetchGitlabUrls(groupId: String, page: Int = 1, accumulator: Seq[GitRepository] = Seq.empty): Seq[GitRepository] = {
-    val url: String = s"$gitlabUrl/api/v4/groups/$groupId/projects?per_page=100&page=$page"
+    val url: String = s"$gitlabUrl/api/v4/groups/$groupId/projects?archived=false&per_page=100&page=$page"
 
     val connection = new URL(url).openConnection
     connection.setRequestProperty("PRIVATE-TOKEN", gitlabToken)
