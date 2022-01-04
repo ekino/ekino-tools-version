@@ -24,7 +24,7 @@ abstract class AbstractParser {
   val extractProperties: ExtractGroups[String] = matchData => matchData.group(1) -> matchData.group(2)
   val extractValue: ExtractGroups[String] = matchData => "value" -> matchData.group(1)
   val extractArtifacts: ExtractGroups[String] = matchData => (matchData.group(1) + ":" + matchData.group(2)).trim -> matchData.group(3)
-  val excludedFolder: Regex = """.*/(?:test|.gradle|node_modules|target|build|dist)/.*""".r
+  val excludedFolder: Regex = """.*/(?:src|test|.gradle|node_modules|target|build|dist)/.*""".r
   private val logger = Logger(classOf[AbstractParser])
 
   def getBuildFilesRegex: Regex
