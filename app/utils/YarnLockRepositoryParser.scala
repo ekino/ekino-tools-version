@@ -14,7 +14,7 @@ import scala.util.matching.Regex
 object YarnLockRepositoryParser extends AbstractParser {
 
   private val buildFileName = "yarn.lock"
-  private val yarnVersion = """"?([^\n,]*)@(.*):\n\s+version "(.*)"""".r
+  val yarnVersion: Regex = """"?([^\n,]*)@(.*):\n\s+version:? "?([^"\n]+)"?""".r
   private val versionValue = """[.\da-zA-Z-]+""".r
   val extractYarnDependency: ExtractGroups[YarnDependency] = matchData => matchData.group(1) -> YarnDependency(matchData.group(3), matchData.group(2))
 
