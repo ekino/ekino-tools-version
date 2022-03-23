@@ -23,21 +23,27 @@ body {
 
 .library:before {
     content: "\1F4D5";
+    margin-right: 10px;
 }
 .default:before {
     content: "\1F4C1";
+    margin-right: 10px;
 }
 .service:before {
     content: "\1F3ED";
+    margin-right: 10px;
 }
 .tool:before {
     content: "\1F527";
+    margin-right: 10px;
 }
 .cloud:before {
     content: "\2601";
+    margin-right: 10px;
 }
 .plug:before {
     content: "\1F3D7";
+    margin-right: 10px;
 }
 
 .small-image img {
