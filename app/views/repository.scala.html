@@ -13,7 +13,7 @@
             <div class="col">
                 <h1 class="repository @repository.repositoryType">
                     @repository.name
-                    <span data-color="@repository.completionPercentage" class="float-right badge">
+                    <span data-color="@repository.completionPercentage" class="float-end badge">
                         @repository.completionPercentage %
                     </span>
                 </h1>
@@ -25,7 +25,7 @@
                 <h4>@repository.repository.toolVersion</h4>
             </div>
             <div class="col-6">
-                <span class="float-right">
+                <span class="float-end">
                     <a class="btn btn-primary" href="@routes.HomeController.index()" role="button">Return to home</a>
                 </span>
             </div>
@@ -36,7 +36,7 @@
                 @if(repository.repository.dependencies.nonEmpty) {
 
                     <h4>Dependencies</h4>
-                    <table class="table table-striped">
+                    <table class="table table-striped align-middle">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -61,7 +61,7 @@
                                             <span class="small-image"><img src="@routes.Assets.at("images/" + springBoot + ".svg")" alt="@springBoot"></span>
                                         }
                                         @if(repository.isVersionUpToDate(dependency)) {
-                                            <span class="badge badge-pill badge-success badge-table float-right">OK</span>
+                                            <span class="badge rounded-pill bg-success badge-table float-end">OK</span>
                                         }
                                     </td>
                                 }
@@ -77,7 +77,7 @@
                 @if(repository.repository.plugins.nonEmpty) {
 
                     <h4>Plugins</h4>
-                    <table class="table table-striped">
+                    <table class="table table-striped align-middle">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -94,7 +94,7 @@
                                         <span>@pluginId</span>
                                     </a>
                                     @if(repository.isPluginUpToDate(pluginId)) {
-                                        <span class="badge badge-pill badge-success badge-table float-right">OK</span>
+                                        <span class="badge rounded-pill bg-success badge-table float-end">OK</span>
                                     }
                                 </td>
                                 <td>@repository.getPluginVersion(pluginId)</td>
