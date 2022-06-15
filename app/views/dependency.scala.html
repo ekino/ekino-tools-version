@@ -42,9 +42,12 @@
                         <tr>
                             <td>@version</td>
                             <td>
+                                <dl>
                                 @for(repository <- dependency.getRepositories(version)) {
-                                    <a href="@routes.RepositoryController.index(repository)" role="button">@repository</a>
+                                    <dd><a href="@routes.RepositoryController.index(repository)" role="button">@repository</a></dd>
                                 }
+                                </dl>
+
                             </td>
                         </tr>
                     }

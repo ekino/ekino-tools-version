@@ -42,7 +42,7 @@
                         @for(project <- projects) {
                             <div class="tabcontent" id="tab@project.name">
                                 @for(repository <- project.repositories) {
-                                    <a href="@routes.RepositoryController.index(repository.name)" class="list-group-item list-group-item-action repository d-flex justify-content-between align-items-center">
+                                    <a href="@routes.RepositoryController.index(repository.name)" class="list-group-item list-group-item-action repository justify-content-between align-items-center">
                                         <span class="name @repository.repositoryType">@repository.name</span>
                                         <span data-color="@repository.completionPercentage" class="badge float-end col-2">
                                             @repository.completionPercentage %

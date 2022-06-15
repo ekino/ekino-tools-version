@@ -18,7 +18,7 @@ body {
 
 /* Line under active nav item */
 .active {
-    border-bottom: .15rem solid var(--dark);
+    border-bottom: .15rem solid #000;
 }
 
 .library:before {
