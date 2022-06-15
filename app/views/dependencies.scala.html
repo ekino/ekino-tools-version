@@ -31,7 +31,7 @@
                             <span class="name">
                                 @dependency.name
                             </span>
-                            @defining(dependency.numberOfUses) { uses: Int =>
+                            @defining(dependency.numberOfUses()) { uses: Int =>
                                 <span class="float-end badge bg-info">
                                     @uses @(if (uses > 1) "uses" else "use")
                                 </span>

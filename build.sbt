@@ -3,6 +3,7 @@ import java.util.Properties
 name := "ekino-tools-version"
 version := "1.0.0"
 scalaVersion := "2.13.6"
+maintainer := "philippe.agra@ekino.com"
 
 val gradleProperties = settingKey[Properties]("The gradle properties")
 gradleProperties := {
