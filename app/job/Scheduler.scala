@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext
   */
 class Scheduler @Inject()(val system: ActorSystem, @Named("updater-actor") val updaterActor: ActorRef, configuration: Configuration)(implicit executionContext: ExecutionContext) {
 
-  system.scheduler.schedule(
+  system.scheduler.scheduleWithFixedDelay(
     configuration.get("scheduler.initial-delay"),
     configuration.get("scheduler.interval"),
     updaterActor,

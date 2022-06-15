@@ -3,15 +3,14 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.HomeController.index
+GET     /                           controllers.HomeController.index()
 GET     /websocket                  controllers.HomeController.websocket
-GET     /initialized                controllers.HomeController.initialized
-GET     /health                     controllers.HealthController.index
+GET     /initialized                controllers.HomeController.initialized()
+GET     /health                     controllers.HealthController.index()
 GET     /repositories/:name         controllers.RepositoryController.index(name)
-GET     /dependencies               controllers.DependencyController.dependencies
+GET     /dependencies               controllers.DependencyController.dependencies()
 GET     /dependencies/:name         controllers.DependencyController.dependency(name)
 GET     /plugins/:pluginId          controllers.PluginController.index(pluginId)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
-
