@@ -11,7 +11,7 @@ trait VersionFetcher {
 
   def fetchUrl(url: String, site: Site, headers: (String, String)*): String = {
     val connection = new URL(url).openConnection
-    if (!site.user.isEmpty && !site.password.isEmpty) {
+    if (site.user.nonEmpty && site.password.nonEmpty) {
       connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION,
         HttpBasicAuth.getHeader(site.user, site.password)
       )

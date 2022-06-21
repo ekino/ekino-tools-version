@@ -19,7 +19,7 @@ case class RepositoryData(
 }
 
 object RepositoryData {
-  def noData = RepositoryData(
+  val emptyData: RepositoryData = RepositoryData(
     Seq.empty[Repository],
     Seq.empty[DisplayDependency],
     Seq.empty[DisplayPlugin],

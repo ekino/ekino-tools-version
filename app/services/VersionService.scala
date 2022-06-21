@@ -21,7 +21,7 @@ class VersionService @Inject()(configuration: Configuration,
   private val parsers = Seq(YarnLockRepositoryParser, NPMRepositoryParser, SBTRepositoryParser, MavenRepositoryParser, GradleRepositoryParser)
   private val logger = Logger(classOf[VersionService])
 
-  @volatile var data: RepositoryData = RepositoryData.noData
+  @volatile var data: RepositoryData = RepositoryData.emptyData
 
   /**
     * List all the projects to display.
@@ -70,7 +70,7 @@ class VersionService @Inject()(configuration: Configuration,
 
   def allDependencies(): Seq[AbstractDisplay] = data.getPluginsAndDependencies.sortBy(_.name)
 
-  def noData: Boolean = data == RepositoryData.noData
+  def noData: Boolean = data eq RepositoryData.emptyData
 
   /**
     * Initialize the data if needed.
