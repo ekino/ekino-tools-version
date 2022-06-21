@@ -44,6 +44,6 @@ class HomeController @Inject()(
     * @return true or false as json
     */
   def initialized: Action[AnyContent] = Action {
-    Ok(Json.toJson(versionService.data != RepositoryData.noData))
+    Ok(Json.toJson(!versionService.noData))
   }
 }
