@@ -43,7 +43,7 @@ case class DisplayRepository(
       } else if (placeholder == "revision") {
         springbootVersion.get.version
       } else {
-        dependency.version
+        placeholder
       }
 
       VersionComparator.compare(dependency.version, version).sign match {
@@ -125,8 +125,3 @@ case class DisplayRepository(
   }
 
 }
-
-
-
-
-
