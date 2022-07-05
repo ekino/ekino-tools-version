@@ -21,6 +21,7 @@ object MavenRepositoryParser extends AbstractParser {
   val projectNameRegex: Regex = """\s*<groupId>[a-zA-Z0-9.-]+</groupId>\n\s*<artifactId>([a-zA-Z0-9.-]+)</artifactId>\n\s*<version>[a-zA-Z0-9.-]+</version>\n\s*<packaging>""".r
   val mavenVersionRegex: Regex = """.*apache-maven-([0-9.-]+)-.*""".r
   val pluginRegex: Regex = """\s*<plugin>\n\s*<groupId>([a-zA-Z0-9.-]+)</groupId>\n\s*<artifactId>([a-zA-Z0-9.-]+)</artifactId>\n\s*<version>(?:\$\{)?([a-zA-Z0-9.-]+)(\})?</version>""".r
+  val springbootRegex: Regex = """\s+<parent>\s+<groupId>org.springframework.boot</groupId>\s+<artifactId>spring-boot-starter-parent</artifactId>\s+<version>(.*)</version>""".r
 
   override def buildRepository(folder: File, groupName: String): Task[Repository] = Task {
     // project files
@@ -47,9 +48,12 @@ object MavenRepositoryParser extends AbstractParser {
     val artifacts = replaceVersionsHolder(extractedArtifacts, properties)
       .map(p => JvmDependency(p._1, p._2, subfolder))
       .toSeq
+
+    val extractedSpringbootVersion = extractFromFile(buildFile, springbootRegex, extractValue)
     val plugins = replaceVersionsHolder(extractedPlugins, properties)
       .map(p => MavenPlugin(p._1, p._2))
-      .toSeq
+      .toSeq ++ extractedSpringbootVersion.map(v => MavenPlugin("org.springframework.boot", v._2))
+
 
     val springBootData = SpringBootUtils.getSpringBootData(plugins)
     val springBootOverrides = SpringBootUtils.getSpringBootOverrides(artifacts, properties, springBootData)
@@ -61,4 +65,3 @@ object MavenRepositoryParser extends AbstractParser {
 
   override def getBuildFilesRegex: Regex = buildFileName.r
 }
-
