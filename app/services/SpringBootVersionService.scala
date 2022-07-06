@@ -22,7 +22,7 @@ object SpringBootVersionService {
   private val propertyRegex = """\$\{(.*)}""".r
   private val libraryVersion = """\s+library\("[^"]+", "([^"]+)".*""".r
   private val groupName = """\s+group\("([^"]+)".*""".r
-  private val artefactName = """\s+"([^"]+)".*""".r
+  private val artifactName = """\s+"([^"]+)".*""".r
   private val endBlock = """\t}""".r
   private val innerEndBlock = """\t\t}""".r
 
@@ -71,12 +71,12 @@ object SpringBootVersionService {
     val groovy = Source.fromInputStream(connection.getInputStream).mkString
     val librairies = parseLibrairies(groovy.split('\n').toList, List.empty)
 
-    val artefacts = librairies
+    val artifacts = librairies
       .flatMap(l => l.groups.map(g => g.modules.map(m => (g.groupName + ":" + m.name, l.version))))
       .flatten
       .toMap
 
-    SpringBootData(artefacts, Map.empty)
+    SpringBootData(artifacts, Map.empty)
   }
 
   @tailrec
@@ -104,7 +104,7 @@ object SpringBootVersionService {
   @tailrec
   private def parseModules(lines: List[String], modules: List[Module] = List.empty): List[Module] = {
     lines match {
-      case artefactName(artefact)::tail               => parseModules(tail, modules :+ Module(artefact))
+      case artifactName(artifact)::tail               => parseModules(tail, modules :+ Module(artifact))
       case _::tail                                    => parseModules(tail, modules)
       case _                                          => modules
     }

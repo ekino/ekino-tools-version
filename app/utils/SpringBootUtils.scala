@@ -12,7 +12,7 @@ object SpringBootUtils {
     properties
       .filter(p => !artifacts.exists(_.version == p._1))
       .filter(p => springBootData.properties.exists(_._1 == p._1))
-      .map(p => springBootData.artefacts
+      .map(p => springBootData.artifacts
         .find(a => a._2 == p._1)
         .map(a => (a._1, p._2))
       )
