@@ -22,6 +22,7 @@ jobs:
       - name: Setup java and sbt
         uses: olafurpg/setup-scala@v13
         with:
-          java-version: adopt@1.11
+          distribution: 'temurin'
+          java-version: '17'
       - name: Build and test
         run: sbt test

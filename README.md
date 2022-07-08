@@ -15,7 +15,7 @@ It provides 5 views:
 
 ## Requirements
 
-JDK 11 is required.
+JDK 17 is required.
 
 ## Run
 
@@ -77,6 +77,6 @@ project {
 
 ## Documentation
 
-* https://www.playframework.com/documentation/2.6.x/Home
+* https://www.playframework.com/documentation/2.8.x/Home
 * http://akka.io/docs/
 * http://www.scala-lang.org/
