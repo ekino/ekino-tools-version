@@ -2,7 +2,7 @@ name: Build and test
 on:
   push:
     branches:
-      - "*"
+      - "**"
 
 jobs:
   build:
@@ -22,7 +22,6 @@ jobs:
       - name: Setup java and sbt
         uses: olafurpg/setup-scala@v13
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          java-version: openjdk@1.17.0
       - name: Build and test
         run: sbt test
