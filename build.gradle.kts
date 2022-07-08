@@ -4,7 +4,7 @@ plugins {
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
     maven {
         name = "lightbend-maven-releases"
         url = uri("https://repo.lightbend.com/lightbend/maven-release")
@@ -20,7 +20,7 @@ play {
     platform {
         playVersion.set(property("play.version") as String)
         scalaVersion.set(property("scala.version") as String)
-        javaVersion.set(JavaVersion.VERSION_11)
+        javaVersion.set(JavaVersion.VERSION_17)
     }
     injectedRoutesGenerator.set(true)
 }

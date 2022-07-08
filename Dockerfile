@@ -1,9 +1,9 @@
-FROM adoptopenjdk/openjdk11:jdk-11.0.10_9 as builder
+FROM eclipse-temurin:17.0.3_7-jdk as builder
 
 RUN jlink \
     --add-modules java.security.jgss,java.rmi,java.sql,java.desktop,jdk.crypto.ec,jdk.unsupported \
     --verbose \
-    --strip-debug \
+    --strip-java-debug-attributes \
     --compress 2 \
     --no-header-files \
     --no-man-pages \
