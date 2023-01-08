@@ -12,9 +12,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "com.ekino.base"
-    matchers.group(2) shouldBe "ekino-base-service"
-    matchers.group(3) shouldBe "ekino-base-service.version"
+    matchers.group("groupId") shouldBe "com.ekino.base"
+    matchers.group("artifactId") shouldBe "ekino-base-service"
+    matchers.group("version") shouldBe "ekino-base-service.version"
   }
 
   @Test
@@ -23,9 +23,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "org.scalatestplus.play"
-    matchers.group(2) shouldBe "scalatestplus-play_2.11"
-    matchers.group(3) shouldBe "scalatestplus-play_2.11.version"
+    matchers.group("groupId") shouldBe "org.scalatestplus.play"
+    matchers.group("artifactId") shouldBe "scalatestplus-play_2.11"
+    matchers.group("version") shouldBe "scalatestplus-play_2.11.version"
   }
 
   @Test
@@ -34,9 +34,20 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "com.ekino.library"
-    matchers.group(2) shouldBe "ekino-library-logs"
-    matchers.group(3) shouldBe "ekinoLogsVersion"
+    matchers.group("groupId") shouldBe "com.ekino.library"
+    matchers.group("artifactId") shouldBe "ekino-library-logs"
+    matchers.group("version") shouldBe "ekinoLogsVersion"
+  }
+
+  @Test
+  def should_parse_dependencies_without_version(): Unit = {
+    val prop = """compile("com.ekino.library:ekino-library-logs")"""
+    val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
+
+    matchers should not be empty
+    matchers.group("groupId") shouldBe "com.ekino.library"
+    matchers.group("artifactId") shouldBe "ekino-library-logs"
+    matchers.group("version") shouldBe null
   }
 
   @Test
@@ -45,9 +56,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "org.springframework.cloud"
-    matchers.group(2) shouldBe "spring-cloud-dependencies"
-    matchers.group(3) shouldBe "Dalston.SR4"
+    matchers.group("groupId") shouldBe "org.springframework.cloud"
+    matchers.group("artifactId") shouldBe "spring-cloud-dependencies"
+    matchers.group("version") shouldBe "Dalston.SR4"
   }
 
   @Test
@@ -56,9 +67,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "com.ekino.base"
-    matchers.group(2) shouldBe "ekino-base-service"
-    matchers.group(3) shouldBe "1.0.0"
+    matchers.group("groupId") shouldBe "com.ekino.base"
+    matchers.group("artifactId") shouldBe "ekino-base-service"
+    matchers.group("version") shouldBe "1.0.0"
   }
 
   @Test
@@ -67,9 +78,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "com.ekino.base"
-    matchers.group(2) shouldBe "ekino-base-service"
-    matchers.group(3) shouldBe "ekino-base-service.version"
+    matchers.group("groupId") shouldBe "com.ekino.base"
+    matchers.group("artifactId") shouldBe "ekino-base-service"
+    matchers.group("version") shouldBe "ekino-base-service.version"
   }
 
   @Test
@@ -78,9 +89,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "org.assertj"
-    matchers.group(2) shouldBe "assertj-core"
-    matchers.group(3) shouldBe "assertj.version"
+    matchers.group("groupId") shouldBe "org.assertj"
+    matchers.group("artifactId") shouldBe "assertj-core"
+    matchers.group("version") shouldBe "assertj.version"
   }
 
   @Test
@@ -89,9 +100,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "org.springframework.boot"
-    matchers.group(2) shouldBe "spring-boot-dependencies"
-    matchers.group(3) shouldBe "2.2.1.RELEASE"
+    matchers.group("groupId") shouldBe "org.springframework.boot"
+    matchers.group("artifactId") shouldBe "spring-boot-dependencies"
+    matchers.group("version") shouldBe "2.2.1.RELEASE"
   }
 
   @Test
@@ -100,9 +111,9 @@ class GradleRepositoryParserTest extends AssertionsForJUnit with Matchers  {
     val matchers = GradleRepositoryParser.artifactRegex.findAllIn(prop)
 
     matchers should not be empty
-    matchers.group(1) shouldBe "org.springframework.boot"
-    matchers.group(2) shouldBe "spring-boot-dependencies"
-    matchers.group(3) shouldBe "2.2.1.RELEASE"
+    matchers.group("groupId") shouldBe "org.springframework.boot"
+    matchers.group("artifactId") shouldBe "spring-boot-dependencies"
+    matchers.group("version") shouldBe "2.2.1.RELEASE"
   }
 
   @Test
