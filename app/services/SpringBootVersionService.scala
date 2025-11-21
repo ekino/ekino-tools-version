@@ -36,7 +36,8 @@ object SpringBootVersionService {
   val springBootData: String => SpringBootData = Memo.immutableHashMapMemo {
     case version if version.startsWith("1.")                             => getData(s"$baseSpringbootUrl$version$pomPath")
     case version if springboot2VersionWithPom.exists(version.startsWith) => getData(s"$baseSpringbootUrl$version/spring-boot-project$pomPath")
-    case version                                                         => parseData(s"$baseSpringbootUrl$version/spring-boot-project$gradlePath")
+    case version if version.startsWith("3.")                             => parseData(s"$baseSpringbootUrl$version/spring-boot-project$gradlePath")
+    case version                                                         => parseData(s"$baseSpringbootUrl$version/platform$gradlePath")
   }
 
   private def formatProperty(value: String): String = {
